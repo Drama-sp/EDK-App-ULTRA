@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>EDK APP ULTRA Pro - v1.2 Secure Update</title>
     
+    <!-- Configuración PWA -->
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.jpg">
     <link rel="icon" type="image/jpeg" href="icon.jpg">
-    <meta name="theme-color" content="#020617">
     
+    <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EDK ULTRA">
+
     <!-- Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -18,7 +24,7 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap');
         
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
@@ -33,6 +39,7 @@
             width: 100vw;
         }
 
+        /* Contenedor de 6.1" - 6.7" */
         .app-container {
             position: relative;
             width: 100%;
@@ -59,6 +66,7 @@
         .animate-in { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* Estilo Maestro Master Card */
         .master-card { 
             background: rgba(255, 255, 255, 0.03); 
             border: 1px solid rgba(255, 255, 255, 0.08); 
@@ -79,7 +87,7 @@
             100% { box-shadow: 0 0 0px #00f2ff; }
         }
         .touch-active-glow {
-            animation: electric-pulse 1.5s infinite;
+            animation: electric-pulse 1s infinite;
             background: rgba(0, 242, 255, 0.1) !important;
             border-color: #00f2ff !important;
         }
@@ -94,14 +102,14 @@
             position: absolute;
             left: 0;
             width: 100%;
-            height: 2px;
+            height: 4px;
             background: #00f2ff;
             box-shadow: 0 0 15px #00f2ff, 0 0 30px #00f2ff;
             animation: scan-move 2s linear infinite;
             z-index: 20;
         }
 
-        /* Progreso circular de escaneo */
+        /* Anillo de progreso */
         .progress-ring {
             position: absolute;
             top: 0;
@@ -115,7 +123,7 @@
             stroke: #00f2ff;
             stroke-width: 4;
             fill: transparent;
-            stroke-dasharray: 565; /* 2 * PI * r */
+            stroke-dasharray: 565; 
             stroke-dashoffset: 565;
             transition: stroke-dashoffset 2s linear;
         }
@@ -153,6 +161,13 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        // Registrar Service Worker para instalación
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log("SW error", err));
+            });
+        }
+
         // --- Iconos ---
         const Icon = ({ name, className = "w-6 h-6", color = "currentColor" }) => {
             const icons = {
@@ -170,14 +185,14 @@
                     <path d="M12 12v4" />
                     <path d="M12 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
                 </React.Fragment>,
-                lock: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
-                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10M12 8v4M12 16h.01" strokeWidth="2" />
+                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10M12 8v4M12 16h.01" strokeWidth="2" />,
+                download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
             };
             return <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
         };
 
         const App = () => {
-            const [tab, setTab] = useState('home');
+            const [activeTab, setActiveTab] = useState('home');
             const [theme, setTheme] = useState(() => localStorage.getItem('edk_ultra_theme') || 'blue');
             const [xp, setXp] = useState(() => parseInt(localStorage.getItem('edk_ultra_xp')) || 0);
             
@@ -186,8 +201,10 @@
             const [pinInput, setPinInput] = useState('');
             const [isScanning, setIsScanning] = useState(false);
             const [authError, setAuthError] = useState(false);
+            const [deferredPrompt, setDeferredPrompt] = useState(null);
 
             const qrRef = useRef(null);
+            const cardQrRef = useRef(null);
             const scanTimerRef = useRef(null);
             const html5Scanner = useRef(null);
 
@@ -201,6 +218,14 @@
             const activeTheme = themes[theme];
             const level = Math.floor(xp / 100);
 
+            // Capturar evento de instalación PWA
+            useEffect(() => {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    setDeferredPrompt(e);
+                });
+            }, []);
+
             useEffect(() => {
                 localStorage.setItem('edk_ultra_theme', theme);
                 localStorage.setItem('edk_ultra_xp', xp);
@@ -208,21 +233,21 @@
             }, [theme, xp]);
 
             useEffect(() => {
-                if (tab === 'home' && qrRef.current) {
+                if (activeTab === 'home' && qrRef.current) {
                     qrRef.current.innerHTML = "";
                     new QRCode(qrRef.current, { text: window.location.href, width: 180, height: 180 });
                 }
-                if (tab === 'portal') {
+                if (activeTab === 'portal') {
                     setTimeout(() => startAR(), 500);
                 } else { stopAR(); }
                 
-                if (tab !== 'secure') {
+                if (activeTab !== 'secure') {
                     setIsSecureUnlocked(false);
                     setPinInput('');
                     setAuthError(false);
                     cancelScan();
                 }
-            }, [tab]);
+            }, [activeTab]);
 
             const startAR = () => {
                 if (!document.getElementById("ar-reader")) return;
@@ -247,6 +272,14 @@
                             setTimeout(() => { setPinInput(''); setAuthError(false); }, 1000);
                         }
                     }
+                }
+            };
+
+            const installApp = async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') setDeferredPrompt(null);
                 }
             };
 
@@ -294,14 +327,17 @@
 
                     <main className="flex-grow overflow-y-auto scrollbar-hide px-6 pt-6 pb-32">
                         
-                        {tab === 'home' && (
+                        {activeTab === 'home' && (
                             <div className="space-y-6 animate-in">
                                 <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[200px] flex flex-col justify-end`}>
                                     <h2 className="text-3xl font-black italic leading-none mb-1 uppercase">EDK ULTRA v1.2</h2>
                                     <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-6">Status: Encriptado</p>
-                                    <div className="flex gap-2">
-                                        <button className="bg-white text-black py-2.5 px-6 rounded-2xl font-black text-[10px] uppercase shadow-2xl">Manual Red</button>
-                                    </div>
+                                    
+                                    {deferredPrompt && (
+                                        <button onClick={installApp} className="bg-white text-black py-2.5 px-6 rounded-2xl font-black text-[10px] uppercase shadow-2xl flex items-center gap-2 w-fit mb-2 animate-bounce">
+                                            <Icon name="download" className="w-3 h-3" color="#000" /> Instalar App
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="master-card flex flex-col items-center gap-6 text-center">
@@ -312,7 +348,7 @@
                             </div>
                         )}
 
-                        {tab === 'secure' && (
+                        {activeTab === 'secure' && (
                             <div className="animate-in space-y-6 h-full flex flex-col">
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="shield" className="w-7 h-7" color={activeTheme.color} /> Zona Segura</h2>
                                 
@@ -395,7 +431,7 @@
                             </div>
                         )}
 
-                        {tab === 'identity' && (
+                        {activeTab === 'identity' && (
                             <div className="space-y-6 animate-in">
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" className="w-7 h-7" color={activeTheme.color} /> Identidad</h2>
                                 <div className={`master-card bg-gradient-to-br ${rank.color} min-h-[220px] identity-card-glow transition-all duration-700 shadow-2xl`}>
@@ -407,17 +443,17 @@
                                         </div>
                                         <div className="p-2 bg-white/20 backdrop-blur rounded-lg"><Icon name="portal" className="w-6 h-6 text-white" /></div>
                                     </div>
-                                    <h3 className="text-3xl font-black italic uppercase leading-none mb-6 relative z-10 tracking-tighter">ULTRA User</h3>
+                                    <h3 className="text-3xl font-black italic uppercase leading-none mb-6 relative z-10 tracking-tighter">ULTRA Master</h3>
                                     <div className="flex justify-between items-end relative z-10">
                                         <div className="text-left"><p className="text-[7px] font-black uppercase opacity-50">Sincronización</p><p className="text-xs font-mono font-bold">{xp} XP</p></div>
                                         <div className="text-right"><p className="text-[7px] font-black uppercase opacity-50">Nivel</p><p className="text-xl font-black italic">LVL {level}</p></div>
                                     </div>
                                 </div>
-                                <button onClick={() => setXp(p => p + 150)} className="master-card p-6 w-full font-black text-[10px] uppercase bg-white/5 border-white/10 active:scale-95 transition-all text-center text-white">Subir Nivel de Datos</button>
+                                <button onClick={() => setXp(p => p + 150)} className="master-card p-6 w-full font-black text-[10px] uppercase bg-white/5 border-white/10 active:scale-95 transition-all text-center">Subir Nivel de Datos</button>
                             </div>
                         )}
 
-                        {tab === 'portal' && (
+                        {activeTab === 'portal' && (
                             <div className="space-y-6 animate-in h-full flex flex-col">
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="portal" className="w-7 h-7" color={activeTheme.color} /> Portal AR</h2>
                                 <div className="master-card flex-grow relative p-0 overflow-hidden bg-black min-h-[400px]">
@@ -433,7 +469,7 @@
                             </div>
                         )}
 
-                        {tab === 'themes' && (
+                        {activeTab === 'themes' && (
                             <div className="space-y-6 animate-in pt-4">
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="brush" className="w-7 h-7" color={activeTheme.color} /> Temas</h2>
                                 <div className="master-card grid grid-cols-2 gap-8 justify-items-center">
@@ -449,25 +485,17 @@
 
                     </main>
 
-                    <nav className="flex-shrink-0 absolute bottom-0 left-0 w-full h-24 bg-slate-950/90 backdrop-blur-2xl border-t border-white/5 flex justify-around items-center px-4 safe-bottom z-50">
-                        <button onClick={() => setTab('home')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${tab === 'home' ? '' : 'opacity-30'}`} style={{color: tab === 'home' ? activeTheme.color : 'white'}}>
-                            <Icon name="home" className="w-5.5 h-5.5" /><span className="text-[6px] font-black uppercase tracking-tighter">Home</span>
-                        </button>
-                        <button onClick={() => setTab('identity')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${tab === 'identity' ? '' : 'opacity-30'}`} style={{color: tab === 'identity' ? activeTheme.color : 'white'}}>
-                            <Icon name="id" className="w-5.5 h-5.5" /><span className="text-[6px] font-black uppercase tracking-tighter">Identidad</span>
-                        </button>
+                    {/* Dock Pro Dinámico */}
+                    <nav className="flex-shrink-0 absolute bottom-0 left-0 w-full h-24 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 px-2 flex justify-around items-center z-[100] safe-bottom">
+                        <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeTab === 'home' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'home' ? activeTheme.color : 'white'}}><Icon name="home" className="w-5 h-5"/><span className="text-[5px] font-black uppercase tracking-tighter">Home</span></button>
+                        <button onClick={() => setActiveTab('identity')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeTab === 'identity' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'identity' ? activeTheme.color : 'white'}}><Icon name="id" className="w-5 h-5"/><span className="text-[5px] font-black uppercase tracking-tighter">Identidad</span></button>
                         
-                        <button onClick={() => setTab('secure')} className={`relative -top-8 w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all active:scale-90 shadow-2xl ${tab === 'secure' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-slate-800 text-white'}`}>
-                            <Icon name="shield" className="w-7 h-7" color={tab === 'secure' ? '#000' : '#fff'} />
-                        </button>
+                        <div className="relative -top-8 flex gap-2 sm:gap-3 p-2 bg-slate-900/80 backdrop-blur-2xl rounded-[1.8rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl">
+                            <button onClick={() => setActiveTab('secure')} className={`w-11 h-11 sm:w-12 sm:h-12 rounded-[1.2rem] sm:rounded-[1.5rem] flex items-center justify-center transition-all active:scale-90 shadow-2xl ${activeTab === 'secure' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-slate-800 text-white hover:bg-slate-700'}`}><Icon name="shield" className="w-7 h-7" color={activeTab === 'secure' ? '#000' : '#fff'} /></button>
+                        </div>
 
-                        <button onClick={() => setTab('portal')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${tab === 'portal' ? '' : 'opacity-30'}`} style={{color: tab === 'portal' ? activeTheme.color : 'white'}}>
-                            <Icon name="portal" className="w-5.5 h-5.5" /><span className="text-[6px] font-black uppercase tracking-tighter">Portal</span>
-                        </button>
-                        
-                        <button onClick={() => setTab('themes')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${tab === 'themes' ? '' : 'opacity-30'}`} style={{color: tab === 'themes' ? activeTheme.color : 'white'}}>
-                            <Icon name="brush" className="w-5.5 h-5.5" /><span className="text-[6px] font-black uppercase tracking-tighter">Temas</span>
-                        </button>
+                        <button onClick={() => setActiveTab('themes')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeTab === 'themes' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'themes' ? activeTheme.color : 'white'}}><Icon name="brush" className="w-5 h-5"/><span className="text-[5px] font-black uppercase tracking-tighter">Temas</span></button>
+                        <button onClick={() => setActiveTab('portal')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeTab === 'portal' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'portal' ? activeTheme.color : 'white'}}><Icon name="portal" className="w-5 h-5"/><span className="text-[5px] font-black uppercase tracking-tighter">Portal</span></button>
                     </nav>
 
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/10 rounded-full sm:block hidden"></div>
@@ -480,4 +508,3 @@
     </script>
 </body>
 </html>
-
