@@ -1,0 +1,23 @@
+{
+  "name": "EDK App ULTRA",
+  "short_name": "EDK ULTRA",
+  "description": "Herramienta Pro de EDK Studios para la comunidad de Roblox.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    }
+  ]
+}
