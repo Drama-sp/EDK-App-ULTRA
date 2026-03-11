@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>EDK APP ULTRA Pro - v1.2 Secure Update</title>
+    
+    <link rel="apple-touch-icon" href="icon.jpg">
+    <link rel="icon" type="image/jpeg" href="icon.jpg">
+    <meta name="theme-color" content="#020617">
+    
+    <!-- Frameworks -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #000; 
+            margin: 0; 
+            overflow: hidden; 
+            color: white; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .app-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 410px; 
+            max-height: 890px;
+            background-color: #020617;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 80px rgba(0,0,0,0.9);
+        }
+
+        @media (min-width: 640px) {
+            .app-container {
+                border: 12px solid #1e293b;
+                border-radius: 3.5rem;
+            }
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .animate-in { animation: slideUp 0.4s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .master-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            backdrop-filter: blur(25px);
+            border-radius: 2.5rem;
+            padding: 2rem;
+            width: 100%;
+            overflow: hidden;
+            touch-action: pan-y;
+            position: relative;
+        }
+        @media (min-width: 640px) { .master-card { border-radius: 3.1rem; padding: 2.5rem; } }
+
+        /* --- EFECTOS TOUCH ID AZUL ELÉCTRICO --- */
+        @keyframes electric-pulse {
+            0% { box-shadow: 0 0 0px #00f2ff; }
+            50% { box-shadow: 0 0 30px #00f2ff, inset 0 0 15px #00f2ff; }
+            100% { box-shadow: 0 0 0px #00f2ff; }
+        }
+        .touch-active-glow {
+            animation: electric-pulse 1.5s infinite;
+            background: rgba(0, 242, 255, 0.1) !important;
+            border-color: #00f2ff !important;
+        }
+
+        @keyframes scan-move {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .electric-laser {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #00f2ff;
+            box-shadow: 0 0 15px #00f2ff, 0 0 30px #00f2ff;
+            animation: scan-move 2s linear infinite;
+            z-index: 20;
+        }
+
+        /* Progreso circular de escaneo */
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+            pointer-events: none;
+        }
+        .progress-ring-circle {
+            stroke: #00f2ff;
+            stroke-width: 4;
+            fill: transparent;
+            stroke-dasharray: 565; /* 2 * PI * r */
+            stroke-dashoffset: 565;
+            transition: stroke-dashoffset 2s linear;
+        }
+        .scanning .progress-ring-circle {
+            stroke-dashoffset: 0;
+        }
+
+        .identity-card-glow { box-shadow: 0 0 30px var(--card-glow-color); }
+        #share-qr img { margin: 0 auto; border-radius: 1.2rem; border: 8px solid white; }
+        #ar-reader { width: 100% !important; height: 100% !important; border: none !important; }
+
+        .pin-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: all 0.2s;
+        }
+        .pin-dot.active {
+            background: white;
+            box-shadow: 0 0 10px white;
+            border-color: white;
+        }
+
+        .no-select {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Iconos ---
+        const Icon = ({ name, className = "w-6 h-6", color = "currentColor" }) => {
+            const icons = {
+                home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
+                vault: <React.Fragment><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></React.Fragment>,
+                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM4 8v10h16V8H4z" />,
+                portal: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10M12 22a10 10 0 0 1-10-10"/><circle cx="12" cy="12" r="3"/></React.Fragment>,
+                share: <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/>,
+                brush: <React.Fragment><path d="M12 2a10 10 0 0 0-10 10c0 5.523 4.477 10 10 10s10-4.477 10-10S17.523 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="3"/></React.Fragment>,
+                fingerprint: <React.Fragment>
+                    <path d="M2 12a10 10 0 0 1 20 0" />
+                    <path d="M7 12a5 5 0 0 1 10 0" />
+                    <path d="M5 8a8 8 0 0 1 14 0" />
+                    <path d="M9 16a3 3 0 0 1 6 0" />
+                    <path d="M12 12v4" />
+                    <path d="M12 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
+                </React.Fragment>,
+                lock: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
+                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10M12 8v4M12 16h.01" strokeWidth="2" />
+            };
+            return <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
+        };
+
+        const App = () => {
+            const [tab, setTab] = useState('home');
+            const [theme, setTheme] = useState(() => localStorage.getItem('edk_ultra_theme') || 'blue');
+            const [xp, setXp] = useState(() => parseInt(localStorage.getItem('edk_ultra_xp')) || 0);
+            
+            const [isSecureUnlocked, setIsSecureUnlocked] = useState(false);
+            const [secureMode, setSecureMode] = useState('touch'); 
+            const [pinInput, setPinInput] = useState('');
+            const [isScanning, setIsScanning] = useState(false);
+            const [authError, setAuthError] = useState(false);
+
+            const qrRef = useRef(null);
+            const scanTimerRef = useRef(null);
+            const html5Scanner = useRef(null);
+
+            const themes = {
+                blue: { name: 'Neon', color: '#00d2ff', grad: 'from-blue-600 to-cyan-950' },
+                red: { name: 'Magma', color: '#ff4b2b', grad: 'from-red-600 to-orange-950' },
+                gold: { name: 'Gold', color: '#f9d423', grad: 'from-yellow-500 to-amber-950' },
+                green: { name: 'Matrix', color: '#00ff41', grad: 'from-green-600 to-emerald-950' }
+            };
+
+            const activeTheme = themes[theme];
+            const level = Math.floor(xp / 100);
+
+            useEffect(() => {
+                localStorage.setItem('edk_ultra_theme', theme);
+                localStorage.setItem('edk_ultra_xp', xp);
+                document.documentElement.style.setProperty('--accent-color', activeTheme.color);
+            }, [theme, xp]);
+
+            useEffect(() => {
+                if (tab === 'home' && qrRef.current) {
+                    qrRef.current.innerHTML = "";
+                    new QRCode(qrRef.current, { text: window.location.href, width: 180, height: 180 });
+                }
+                if (tab === 'portal') {
+                    setTimeout(() => startAR(), 500);
+                } else { stopAR(); }
+                
+                if (tab !== 'secure') {
+                    setIsSecureUnlocked(false);
+                    setPinInput('');
+                    setAuthError(false);
+                    cancelScan();
+                }
+            }, [tab]);
+
+            const startAR = () => {
+                if (!document.getElementById("ar-reader")) return;
+                html5Scanner.current = new Html5QrcodeScanner("ar-reader", { fps: 10, qrbox: 250 });
+                html5Scanner.current.render(() => {});
+            };
+
+            const stopAR = () => {
+                if (html5Scanner.current) html5Scanner.current.clear().catch(() => {});
+            };
+
+            const handlePinPress = (num) => {
+                if (pinInput.length < 4) {
+                    const newPin = pinInput + num;
+                    setPinInput(newPin);
+                    if (newPin.length === 4) {
+                        if (newPin === '1234') {
+                            setIsSecureUnlocked(true);
+                            setXp(p => p + 20);
+                        } else {
+                            setAuthError(true);
+                            setTimeout(() => { setPinInput(''); setAuthError(false); }, 1000);
+                        }
+                    }
+                }
+            };
+
+            const startScan = (e) => {
+                if (e.cancelable) e.preventDefault();
+                setIsScanning(true);
+                scanTimerRef.current = setTimeout(() => {
+                    setIsScanning(false);
+                    setIsSecureUnlocked(true);
+                    setXp(p => p + 30);
+                }, 2000); 
+            };
+
+            const cancelScan = () => {
+                if (scanTimerRef.current) {
+                    clearTimeout(scanTimerRef.current);
+                    scanTimerRef.current = null;
+                }
+                setIsScanning(false);
+            };
+
+            const getRankInfo = () => {
+                if (level < 5) return { name: 'BRONCE', color: 'from-orange-700 to-orange-900', glow: 'rgba(194, 120, 57, 0.4)' };
+                if (level < 15) return { name: 'PLATA', color: 'from-slate-400 to-slate-600', glow: 'rgba(255, 255, 255, 0.2)' };
+                if (level < 30) return { name: 'ORO', color: 'from-yellow-400 to-yellow-700', glow: 'rgba(251, 191, 36, 0.4)' };
+                if (level < 50) return { name: 'DIAMANTE', color: 'from-cyan-300 to-blue-500', glow: 'rgba(103, 232, 249, 0.5)' };
+                return { name: 'EDK ULTRA ELITE', color: 'from-purple-600 via-blue-500 to-cyan-400', glow: 'rgba(168, 85, 247, 0.6)' };
+            };
+
+            const rank = getRankInfo();
+
+            return (
+                <div className="app-container animate-in no-select">
+                    <header className="flex-shrink-0 h-24 bg-slate-950/80 backdrop-blur-xl flex items-end px-8 pb-4 border-b border-white/5">
+                        <div className="flex justify-between items-center w-full">
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Acceso EDK</p>
+                                <h1 className="text-xl font-extrabold italic tracking-tighter uppercase">EDK APP ULTRA</h1>
+                            </div>
+                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shadow-lg active:scale-90 transition-transform cursor-pointer" onClick={() => setXp(p => p + 10)}>
+                                <img src="icon.jpg" className="w-full h-full object-cover" alt="User" />
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="flex-grow overflow-y-auto scrollbar-hide px-6 pt-6 pb-32">
+                        
+                        {tab === 'home' && (
+                            <div className="space-y-6 animate-in">
+                                <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[200px] flex flex-col justify-end`}>
+                                    <h2 className="text-3xl font-black italic leading-none mb-1 uppercase">EDK ULTRA v1.2</h2>
+                                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-6">Status: Encriptado</p>
+                                    <div className="flex gap-2">
+                                        <button className="bg-white text-black py-2.5 px-6 rounded-2xl font-black text-[10px] uppercase shadow-2xl">Manual Red</button>
+                                    </div>
+                                </div>
+
+                                <div className="master-card flex flex-col items-center gap-6 text-center">
+                                    <p className="text-[10px] font-black uppercase opacity-40 italic">Enlace de Acceso</p>
+                                    <div className="p-4 bg-white rounded-3xl inline-block shadow-2xl"><div id="share-qr" ref={qrRef}></div></div>
+                                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">Protocolo ULTRA-Share</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {tab === 'secure' && (
+                            <div className="animate-in space-y-6 h-full flex flex-col">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="shield" className="w-7 h-7" color={activeTheme.color} /> Zona Segura</h2>
+                                
+                                <div className="master-card flex-grow flex flex-col items-center justify-center min-h-[500px]">
+                                    {!isSecureUnlocked ? (
+                                        <div className="w-full space-y-10 animate-in">
+                                            <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 mx-auto w-fit">
+                                                <button onClick={() => setSecureMode('touch')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${secureMode === 'touch' ? 'bg-white text-black' : 'text-white/40'}`}>Touch ID</button>
+                                                <button onClick={() => setSecureMode('pin')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${secureMode === 'pin' ? 'bg-white text-black' : 'text-white/40'}`}>PIN</button>
+                                            </div>
+
+                                            {secureMode === 'pin' ? (
+                                                <div className="space-y-10">
+                                                    <div className="flex justify-center gap-6">
+                                                        {[0,1,2,3].map(i => (
+                                                            <div key={i} className={`pin-dot ${pinInput.length > i ? 'active' : ''} ${authError ? 'border-red-500 shadow-red-500/50' : ''}`}></div>
+                                                        ))}
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-4 px-4">
+                                                        {[1,2,3,4,5,6,7,8,9].map(num => (
+                                                            <button key={num} onClick={() => handlePinPress(num)} className="h-16 rounded-2xl bg-white/5 border border-white/5 text-xl font-bold active:bg-white/20 transition-all">{num}</button>
+                                                        ))}
+                                                        <button onClick={() => setPinInput('')} className="h-16 rounded-2xl bg-white/5 border border-white/5 text-[9px] font-black uppercase active:bg-red-500/20">C</button>
+                                                        <button onClick={() => handlePinPress(0)} className="h-16 rounded-2xl bg-white/5 border border-white/5 text-xl font-bold active:bg-white/20 transition-all">0</button>
+                                                        <button disabled className="h-16 rounded-2xl bg-white/5 opacity-10 border border-white/5"></button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-12 text-center">
+                                                    <div 
+                                                        className={`relative w-48 h-48 mx-auto rounded-[4rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-500 ${isScanning ? 'touch-active-glow scale-105' : 'active:scale-95'}`}
+                                                        onMouseDown={startScan} onMouseUp={cancelScan} onMouseLeave={cancelScan}
+                                                        onTouchStart={startScan} onTouchEnd={cancelScan}
+                                                    >
+                                                        {isScanning && <div className="electric-laser"></div>}
+                                                        <svg className={`progress-ring ${isScanning ? 'scanning' : ''}`}>
+                                                            <circle className="progress-ring-circle" r="90" cx="96" cy="96" />
+                                                        </svg>
+                                                        <Icon 
+                                                            name="fingerprint" 
+                                                            className={`w-28 h-28 transition-all duration-500 ${isScanning ? 'text-[#00f2ff] drop-shadow-[0_0_15px_#00f2ff]' : 'opacity-30'}`} 
+                                                            color={isScanning ? "#00f2ff" : "#fff"} 
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className={`text-sm font-black uppercase italic tracking-[0.3em] transition-colors duration-500 ${isScanning ? 'text-[#00f2ff]' : 'text-white'}`}>
+                                                            {isScanning ? 'Validando Biometría...' : 'Autorizar Touch ID'}
+                                                        </h3>
+                                                        <p className="text-[10px] opacity-30 uppercase font-bold mt-3">Mantén pulsado 2 segundos</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="w-full space-y-8 animate-in text-center">
+                                            <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/40 rounded-2xl flex items-center justify-center mx-auto text-cyan-400">
+                                                <Icon name="lock" className="w-8 h-8" color="currentColor" />
+                                            </div>
+                                            <h3 className="text-2xl font-black italic uppercase tracking-tighter">Acceso de Élite</h3>
+                                            <div className="space-y-4 text-left">
+                                                <div className="p-5 rounded-3xl bg-white/5 border border-white/10">
+                                                    <p className="text-[8px] font-black uppercase opacity-40 mb-2">Protocolo Seguro</p>
+                                                    <p className="text-xs font-bold leading-relaxed italic">"Has desbloqueado el núcleo central de EDK APP ULTRA Pro. Disfruta de la exclusividad."</p>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
+                                                        <p className="text-[10px] font-black uppercase text-cyan-400">Rango</p>
+                                                        <p className="text-lg font-black">{rank.name.split(' ')[0]}</p>
+                                                    </div>
+                                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
+                                                        <p className="text-[10px] font-black uppercase text-purple-400">Seguro</p>
+                                                        <p className="text-lg font-black italic">PRM</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => setIsSecureUnlocked(false)} className="py-4 px-8 bg-white text-black rounded-2xl font-black text-[10px] uppercase shadow-xl w-full active:scale-95 transition-transform">Bloquear Núcleo</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {tab === 'identity' && (
+                            <div className="space-y-6 animate-in">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" className="w-7 h-7" color={activeTheme.color} /> Identidad</h2>
+                                <div className={`master-card bg-gradient-to-br ${rank.color} min-h-[220px] identity-card-glow transition-all duration-700 shadow-2xl`}>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 -mr-10 -mt-10 rounded-full blur-2xl"></div>
+                                    <div className="flex justify-between items-start mb-10 relative z-10">
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-widest opacity-60">ULTRA Identity v1.2</p>
+                                            <p className="text-[11px] font-bold tracking-[0.3em]">{rank.name}</p>
+                                        </div>
+                                        <div className="p-2 bg-white/20 backdrop-blur rounded-lg"><Icon name="portal" className="w-6 h-6 text-white" /></div>
+                                    </div>
+                                    <h3 className="text-3xl font-black italic uppercase leading-none mb-6 relative z-10 tracking-tighter">ULTRA User</h3>
+                                    <div className="flex justify-between items-end relative z-10">
+                                        <div className="text-left"><p className="text-[7px] font-black uppercase opacity-50">Sincronización</p><p className="text-xs font-mono font-bold">{xp} XP</p></div>
+                                        <div className="text-right"><p className="text-[7px] font-black uppercase opacity-50">Nivel</p><p className="text-xl font-black italic">LVL {level}</p></div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setXp(p => p + 150)} className="master-card p-6 w-full font-black text-[10px] uppercase bg-white/5 border-white/10 active:scale-95 transition-all text-center text-white">Subir Nivel de Datos</button>
+                            </div>
+                        )}
+
+                        {tab === 'portal' && (
+                            <div className="space-y-6 animate-in h-full flex flex-col">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="portal" className="w-7 h-7" color={activeTheme.color} /> Portal AR</h2>
+                                <div className="master-card flex-grow relative p-0 overflow-hidden bg-black min-h-[400px]">
+                                    <div id="ar-reader" className="w-full h-full opacity-60"></div>
+                                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                        <div className="relative animate-bounce">
+                                            <div className="absolute inset-0 blur-2xl opacity-50" style={{background: activeTheme.color}}></div>
+                                            <div className="relative p-6 border-2 border-dashed rounded-full" style={{borderColor: activeTheme.color}}><img src="icon.jpg" className="w-24 h-24 rounded-full border-4 border-white shadow-2xl" alt="AR" /></div>
+                                            <p className="mt-4 text-center text-[10px] font-black uppercase tracking-[0.4em] drop-shadow-lg text-white">ULTRA Projection</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {tab === 'themes' && (
+                            <div className="space-y-6 animate-in pt-4">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="brush" className="w-7 h-7" color={activeTheme.color} /> Temas</h2>
+                                <div className="master-card grid grid-cols-2 gap-8 justify-items-center">
+                                    {Object.entries(themes).map(([id, t]) => (
+                                        <div key={id} onClick={() => setTheme(id)} className="flex flex-col items-center gap-3 cursor-pointer group">
+                                            <div className={`w-16 h-16 rounded-[22px] transition-all border-4 ${theme === id ? 'border-white scale-110 shadow-2xl' : 'border-transparent opacity-40 group-hover:opacity-100'}`} style={{ backgroundColor: t.color }}></div>
+                                            <span className={`text-[9px] font-black uppercase tracking-widest ${theme === id ? 'text-white' : 'text-slate-500'}`}>{t.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                    </main>
+
+                    <nav className="flex-shrink-0 absolute bottom-0 left-0 w-full h-24 bg-slate-950/90 backdrop-blur-2xl border-t border-white/5 flex justify-around items-center px-4 safe-bottom z-50">
+                        <button onClick={() => setTab('home')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${tab === 'home' ? '' : 'opacity-30'}`} style={{color: tab === 'home' ? activeTheme.color : 'white'}}>
+                            <Icon name="home" className="w-5.5 h-5.5" /><span className="text-[6px] font-black uppercase tracking-tighter">Home</span>
+                        </button>
+                        <button onClick={() => setTab('identity')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${tab === 'identity' ? '' : 'opacity-30'}`} style={{color: tab === 'identity' ? activeTheme.color : 'white'}}>
+                            <Icon name="id" className="w-5.5 h-5.5" /><span className="text-[6px] font-black uppercase tracking-tighter">Identidad</span>
+                        </button>
+                        
+                        <button onClick={() => setTab('secure')} className={`relative -top-8 w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all active:scale-90 shadow-2xl ${tab === 'secure' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-slate-800 text-white'}`}>
+                            <Icon name="shield" className="w-7 h-7" color={tab === 'secure' ? '#000' : '#fff'} />
+                        </button>
+
+                        <button onClick={() => setTab('portal')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${tab === 'portal' ? '' : 'opacity-30'}`} style={{color: tab === 'portal' ? activeTheme.color : 'white'}}>
+                            <Icon name="portal" className="w-5.5 h-5.5" /><span className="text-[6px] font-black uppercase tracking-tighter">Portal</span>
+                        </button>
+                        
+                        <button onClick={() => setTab('themes')} className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${tab === 'themes' ? '' : 'opacity-30'}`} style={{color: tab === 'themes' ? activeTheme.color : 'white'}}>
+                            <Icon name="brush" className="w-5.5 h-5.5" /><span className="text-[6px] font-black uppercase tracking-tighter">Temas</span>
+                        </button>
+                    </nav>
+
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/10 rounded-full sm:block hidden"></div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
