@@ -1,7 +1,7 @@
 {
-  "name": "EDK App ULTRA",
+  "name": "EDK APP ULTRA Pro",
   "short_name": "EDK ULTRA",
-  "description": "Herramienta Pro de EDK Studios para la comunidad de Roblox.",
+  "description": "Protocolo de seguridad y centro de operaciones EDK.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#020617",
