@@ -66,7 +66,6 @@
         .animate-in { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilo Maestro Master Card */
         .master-card { 
             background: rgba(255, 255, 255, 0.03); 
             border: 1px solid rgba(255, 255, 255, 0.08); 
@@ -109,7 +108,6 @@
             z-index: 20;
         }
 
-        /* Anillo de progreso */
         .progress-ring {
             position: absolute;
             top: 0;
@@ -153,6 +151,13 @@
             -webkit-user-select: none;
             user-select: none;
         }
+
+        .img-fallback {
+            background-color: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -167,6 +172,26 @@
                 navigator.serviceWorker.register('./sw.js').catch(err => console.log("SW error", err));
             });
         }
+
+        // --- Componente de Imagen con Fallback ---
+        const SmartImage = ({ src, alt, className }) => {
+            const [error, setError] = useState(false);
+            if (error) {
+                return (
+                    <div className={`${className} img-fallback text-white/20`}>
+                        <Icon name="user" className="w-1/2 h-1/2" />
+                    </div>
+                );
+            }
+            return (
+                <img 
+                    src={src} 
+                    alt={alt} 
+                    className={className} 
+                    onError={() => setError(true)} 
+                />
+            );
+        };
 
         // --- Iconos ---
         const Icon = ({ name, className = "w-6 h-6", color = "currentColor" }) => {
@@ -186,7 +211,8 @@
                     <path d="M12 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
                 </React.Fragment>,
                 shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10M12 8v4M12 16h.01" strokeWidth="2" />,
-                download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />,
+                user: <React.Fragment><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></React.Fragment>
             };
             return <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
         };
@@ -204,7 +230,6 @@
             const [deferredPrompt, setDeferredPrompt] = useState(null);
 
             const qrRef = useRef(null);
-            const cardQrRef = useRef(null);
             const scanTimerRef = useRef(null);
             const html5Scanner = useRef(null);
 
@@ -218,7 +243,6 @@
             const activeTheme = themes[theme];
             const level = Math.floor(xp / 100);
 
-            // Capturar evento de instalación PWA
             useEffect(() => {
                 window.addEventListener('beforeinstallprompt', (e) => {
                     e.preventDefault();
@@ -237,10 +261,6 @@
                     qrRef.current.innerHTML = "";
                     new QRCode(qrRef.current, { text: window.location.href, width: 180, height: 180 });
                 }
-                if (activeTab === 'portal') {
-                    setTimeout(() => startAR(), 500);
-                } else { stopAR(); }
-                
                 if (activeTab !== 'secure') {
                     setIsSecureUnlocked(false);
                     setPinInput('');
@@ -248,32 +268,6 @@
                     cancelScan();
                 }
             }, [activeTab]);
-
-            const startAR = () => {
-                if (!document.getElementById("ar-reader")) return;
-                html5Scanner.current = new Html5QrcodeScanner("ar-reader", { fps: 10, qrbox: 250 });
-                html5Scanner.current.render(() => {});
-            };
-
-            const stopAR = () => {
-                if (html5Scanner.current) html5Scanner.current.clear().catch(() => {});
-            };
-
-            const handlePinPress = (num) => {
-                if (pinInput.length < 4) {
-                    const newPin = pinInput + num;
-                    setPinInput(newPin);
-                    if (newPin.length === 4) {
-                        if (newPin === '1234') {
-                            setIsSecureUnlocked(true);
-                            setXp(p => p + 20);
-                        } else {
-                            setAuthError(true);
-                            setTimeout(() => { setPinInput(''); setAuthError(false); }, 1000);
-                        }
-                    }
-                }
-            };
 
             const installApp = async () => {
                 if (deferredPrompt) {
@@ -317,10 +311,10 @@
                         <div className="flex justify-between items-center w-full">
                             <div>
                                 <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Acceso EDK</p>
-                                <h1 className="text-xl font-extrabold italic tracking-tighter uppercase">EDK APP ULTRA</h1>
+                                <h1 className="text-xl font-extrabold italic tracking-tighter uppercase leading-none">EDK APP ULTRA</h1>
                             </div>
                             <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shadow-lg active:scale-90 transition-transform cursor-pointer" onClick={() => setXp(p => p + 10)}>
-                                <img src="icon.jpg" className="w-full h-full object-cover" alt="User" />
+                                <SmartImage src="icon.jpg" alt="Logo" className="w-full h-full object-cover" />
                             </div>
                         </div>
                     </header>
@@ -329,9 +323,9 @@
                         
                         {activeTab === 'home' && (
                             <div className="space-y-6 animate-in">
-                                <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[200px] flex flex-col justify-end`}>
-                                    <h2 className="text-3xl font-black italic leading-none mb-1 uppercase">EDK ULTRA v1.2</h2>
-                                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-6">Status: Encriptado</p>
+                                <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[200px] flex flex-col justify-end shadow-2xl`}>
+                                    <h2 className="text-3xl font-black italic leading-none mb-1 uppercase tracking-tighter">ULTRA v1.2</h2>
+                                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-6">Status: Optimizado</p>
                                     
                                     {deferredPrompt && (
                                         <button onClick={installApp} className="bg-white text-black py-2.5 px-6 rounded-2xl font-black text-[10px] uppercase shadow-2xl flex items-center gap-2 w-fit mb-2 animate-bounce">
@@ -354,74 +348,38 @@
                                 
                                 <div className="master-card flex-grow flex flex-col items-center justify-center min-h-[500px]">
                                     {!isSecureUnlocked ? (
-                                        <div className="w-full space-y-10 animate-in">
-                                            <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 mx-auto w-fit">
-                                                <button onClick={() => setSecureMode('touch')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${secureMode === 'touch' ? 'bg-white text-black' : 'text-white/40'}`}>Touch ID</button>
-                                                <button onClick={() => setSecureMode('pin')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${secureMode === 'pin' ? 'bg-white text-black' : 'text-white/40'}`}>PIN</button>
+                                        <div className="w-full space-y-12 text-center animate-in">
+                                            <div 
+                                                className={`relative w-48 h-48 mx-auto rounded-[4rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-500 ${isScanning ? 'touch-active-glow scale-105' : 'active:scale-95'}`}
+                                                onMouseDown={startScan} onMouseUp={cancelScan} onMouseLeave={cancelScan}
+                                                onTouchStart={startScan} onTouchEnd={cancelScan}
+                                            >
+                                                {isScanning && <div className="electric-laser"></div>}
+                                                <svg className={`progress-ring ${isScanning ? 'scanning' : ''}`}>
+                                                    <circle className="progress-ring-circle" r="90" cx="96" cy="96" />
+                                                </svg>
+                                                <Icon 
+                                                    name="fingerprint" 
+                                                    className={`w-28 h-28 transition-all duration-500 ${isScanning ? 'text-[#00f2ff] drop-shadow-[0_0_15px_#00f2ff]' : 'opacity-30'}`} 
+                                                    color={isScanning ? "#00f2ff" : "#fff"} 
+                                                />
                                             </div>
-
-                                            {secureMode === 'pin' ? (
-                                                <div className="space-y-10">
-                                                    <div className="flex justify-center gap-6">
-                                                        {[0,1,2,3].map(i => (
-                                                            <div key={i} className={`pin-dot ${pinInput.length > i ? 'active' : ''} ${authError ? 'border-red-500 shadow-red-500/50' : ''}`}></div>
-                                                        ))}
-                                                    </div>
-                                                    <div className="grid grid-cols-3 gap-4 px-4">
-                                                        {[1,2,3,4,5,6,7,8,9].map(num => (
-                                                            <button key={num} onClick={() => handlePinPress(num)} className="h-16 rounded-2xl bg-white/5 border border-white/5 text-xl font-bold active:bg-white/20 transition-all">{num}</button>
-                                                        ))}
-                                                        <button onClick={() => setPinInput('')} className="h-16 rounded-2xl bg-white/5 border border-white/5 text-[9px] font-black uppercase active:bg-red-500/20">C</button>
-                                                        <button onClick={() => handlePinPress(0)} className="h-16 rounded-2xl bg-white/5 border border-white/5 text-xl font-bold active:bg-white/20 transition-all">0</button>
-                                                        <button disabled className="h-16 rounded-2xl bg-white/5 opacity-10 border border-white/5"></button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-12 text-center">
-                                                    <div 
-                                                        className={`relative w-48 h-48 mx-auto rounded-[4rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-500 ${isScanning ? 'touch-active-glow scale-105' : 'active:scale-95'}`}
-                                                        onMouseDown={startScan} onMouseUp={cancelScan} onMouseLeave={cancelScan}
-                                                        onTouchStart={startScan} onTouchEnd={cancelScan}
-                                                    >
-                                                        {isScanning && <div className="electric-laser"></div>}
-                                                        <svg className={`progress-ring ${isScanning ? 'scanning' : ''}`}>
-                                                            <circle className="progress-ring-circle" r="90" cx="96" cy="96" />
-                                                        </svg>
-                                                        <Icon 
-                                                            name="fingerprint" 
-                                                            className={`w-28 h-28 transition-all duration-500 ${isScanning ? 'text-[#00f2ff] drop-shadow-[0_0_15px_#00f2ff]' : 'opacity-30'}`} 
-                                                            color={isScanning ? "#00f2ff" : "#fff"} 
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className={`text-sm font-black uppercase italic tracking-[0.3em] transition-colors duration-500 ${isScanning ? 'text-[#00f2ff]' : 'text-white'}`}>
-                                                            {isScanning ? 'Validando Biometría...' : 'Autorizar Touch ID'}
-                                                        </h3>
-                                                        <p className="text-[10px] opacity-30 uppercase font-bold mt-3">Mantén pulsado 2 segundos</p>
-                                                    </div>
-                                                </div>
-                                            )}
+                                            <div>
+                                                <h3 className={`text-sm font-black uppercase italic tracking-[0.3em] transition-colors duration-500 ${isScanning ? 'text-[#00f2ff]' : 'text-white'}`}>
+                                                    {isScanning ? 'Validando Biometría...' : 'Autorizar Touch ID'}
+                                                </h3>
+                                                <p className="text-[10px] opacity-30 uppercase font-bold mt-3">Mantén pulsado 2 segundos</p>
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="w-full space-y-8 animate-in text-center">
-                                            <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/40 rounded-2xl flex items-center justify-center mx-auto text-cyan-400">
+                                            <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/40 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 shadow-lg shadow-cyan-500/20">
                                                 <Icon name="lock" className="w-8 h-8" color="currentColor" />
                                             </div>
                                             <h3 className="text-2xl font-black italic uppercase tracking-tighter">Acceso de Élite</h3>
                                             <div className="space-y-4 text-left">
-                                                <div className="p-5 rounded-3xl bg-white/5 border border-white/10">
-                                                    <p className="text-[8px] font-black uppercase opacity-40 mb-2">Protocolo Seguro</p>
-                                                    <p className="text-xs font-bold leading-relaxed italic">"Has desbloqueado el núcleo central de EDK APP ULTRA Pro. Disfruta de la exclusividad."</p>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
-                                                        <p className="text-[10px] font-black uppercase text-cyan-400">Rango</p>
-                                                        <p className="text-lg font-black">{rank.name.split(' ')[0]}</p>
-                                                    </div>
-                                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
-                                                        <p className="text-[10px] font-black uppercase text-purple-400">Seguro</p>
-                                                        <p className="text-lg font-black italic">PRM</p>
-                                                    </div>
+                                                <div className="p-5 rounded-3xl bg-white/5 border border-white/10 text-center">
+                                                    <p className="text-xs font-bold leading-relaxed italic text-white/80">"Has desbloqueado el núcleo central de EDK APP ULTRA Pro. Tu acceso está autenticado."</p>
                                                 </div>
                                             </div>
                                             <button onClick={() => setIsSecureUnlocked(false)} className="py-4 px-8 bg-white text-black rounded-2xl font-black text-[10px] uppercase shadow-xl w-full active:scale-95 transition-transform">Bloquear Núcleo</button>
@@ -441,9 +399,11 @@
                                             <p className="text-[9px] font-black uppercase tracking-widest opacity-60">ULTRA Identity v1.2</p>
                                             <p className="text-[11px] font-bold tracking-[0.3em]">{rank.name}</p>
                                         </div>
-                                        <div className="p-2 bg-white/20 backdrop-blur rounded-lg"><Icon name="portal" className="w-6 h-6 text-white" /></div>
+                                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/20 p-1.5 backdrop-blur-md border border-white/20">
+                                            <SmartImage src="icon.jpg" alt="User" className="w-full h-full object-cover rounded-lg shadow-inner" />
+                                        </div>
                                     </div>
-                                    <h3 className="text-3xl font-black italic uppercase leading-none mb-6 relative z-10 tracking-tighter">ULTRA Master</h3>
+                                    <h3 className="text-3xl font-black italic uppercase leading-none mb-6 relative z-10 tracking-tighter">ULTRA MASTER</h3>
                                     <div className="flex justify-between items-end relative z-10">
                                         <div className="text-left"><p className="text-[7px] font-black uppercase opacity-50">Sincronización</p><p className="text-xs font-mono font-bold">{xp} XP</p></div>
                                         <div className="text-right"><p className="text-[7px] font-black uppercase opacity-50">Nivel</p><p className="text-xl font-black italic">LVL {level}</p></div>
@@ -456,12 +416,16 @@
                         {activeTab === 'portal' && (
                             <div className="space-y-6 animate-in h-full flex flex-col">
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="portal" className="w-7 h-7" color={activeTheme.color} /> Portal AR</h2>
-                                <div className="master-card flex-grow relative p-0 overflow-hidden bg-black min-h-[400px]">
+                                <div className="master-card flex-grow relative p-0 overflow-hidden bg-black min-h-[400px] border-2 border-white/5 shadow-inner">
                                     <div id="ar-reader" className="w-full h-full opacity-60"></div>
                                     <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                                        <div className="relative animate-bounce">
-                                            <div className="absolute inset-0 blur-2xl opacity-50" style={{background: activeTheme.color}}></div>
-                                            <div className="relative p-6 border-2 border-dashed rounded-full" style={{borderColor: activeTheme.color}}><img src="icon.jpg" className="w-24 h-24 rounded-full border-4 border-white shadow-2xl" alt="AR" /></div>
+                                        <div className="relative animate-bounce text-center">
+                                            <div className="absolute inset-0 blur-3xl opacity-50 mx-auto" style={{background: activeTheme.color, width: '120px', height: '120px'}}></div>
+                                            <div className="relative p-6 border-2 border-dashed rounded-full inline-block" style={{borderColor: activeTheme.color}}>
+                                                <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-slate-900 flex items-center justify-center">
+                                                    <SmartImage src="icon.jpg" alt="AR" className="w-full h-full object-cover" />
+                                                </div>
+                                            </div>
                                             <p className="mt-4 text-center text-[10px] font-black uppercase tracking-[0.4em] drop-shadow-lg text-white">ULTRA Projection</p>
                                         </div>
                                     </div>
@@ -472,7 +436,7 @@
                         {activeTab === 'themes' && (
                             <div className="space-y-6 animate-in pt-4">
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="brush" className="w-7 h-7" color={activeTheme.color} /> Temas</h2>
-                                <div className="master-card grid grid-cols-2 gap-8 justify-items-center">
+                                <div className="master-card grid grid-cols-2 gap-6 justify-items-center shadow-xl">
                                     {Object.entries(themes).map(([id, t]) => (
                                         <div key={id} onClick={() => setTheme(id)} className="flex flex-col items-center gap-3 cursor-pointer group">
                                             <div className={`w-16 h-16 rounded-[22px] transition-all border-4 ${theme === id ? 'border-white scale-110 shadow-2xl' : 'border-transparent opacity-40 group-hover:opacity-100'}`} style={{ backgroundColor: t.color }}></div>
