@@ -1,24 +1,25 @@
-// Archivo esencial para que Chrome permita la instalación (PWA)
 const CACHE_NAME = 'edk-ultra-v1';
-const assets = [
+const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon.jpg'
+  './icon1.svg'
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
+// Instalar el Service Worker y guardar archivos en caché
+self.addEventListener('install', (e) => {
+  e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(assets);
+      return cache.addAll(ASSETS);
     })
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+// Estrategia: Cargar desde caché, si no hay, ir a la red
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then((response) => {
+      return response || fetch(e.request);
     })
   );
 });
