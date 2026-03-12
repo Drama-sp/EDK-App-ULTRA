@@ -1,5 +1,5 @@
-// Cambiamos el nombre de la caché (v1 -> v2) para forzar la actualización
-const CACHE_NAME = 'edk-ultra-v2'; 
+// Cambiamos el nombre a v1.9.4 para forzar el borrado de la caché antigua
+const CACHE_NAME = 'edk-ultra-v1.9.4';
 const ASSETS = [
   './',
   './index.html',
@@ -7,33 +7,38 @@ const ASSETS = [
   './edkultra.svg'
 ];
 
-// Instalación: Guardar nuevos archivos
-self.addEventListener('install', (e) => {
-  e.waitUntil(
+self.addEventListener('install', (event) => {
+  // Forzar que el nuevo Service Worker se instale de inmediato
+  self.skipWaiting();
+  event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
     })
   );
-  self.skipWaiting(); // Fuerza al nuevo SW a tomar el control de inmediato
 });
 
-// Activación: Borrar cachés antiguas (donde está la imagen vieja)
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
-          return caches.delete(key);
-        }
-      }));
+self.addEventListener('activate', (event) => {
+  // Borrar cualquier caché antigua que no coincida con el nombre actual
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log("Limpiando caché antigua:", cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
     })
   );
+  // Reclamar el control de las pestañas abiertas inmediatamente
+  return self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
     })
   );
 });
