@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v1.2</title>
+    <title>EDK APP ULTRA Pro</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
@@ -24,14 +24,9 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; margin: 0; overflow: hidden; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; }
         .app-container { position: relative; width: 100%; height: 100%; max-width: 410px; background-color: #020617; overflow: hidden; display: flex; flex-direction: column; }
         @media (min-width: 640px) { .app-container { border: 12px solid #1e293b; border-radius: 3.5rem; height: 890px; } }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
         .master-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(25px); border-radius: 2.5rem; padding: 2rem; position: relative; }
         .animate-in { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        .progress-ring-circle { stroke: #00f2ff; stroke-width: 4; fill: transparent; stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset 2s linear; }
-        .scanning .progress-ring-circle { stroke-dashoffset: 0; }
-        .electric-laser { position: absolute; left: 0; width: 100%; height: 4px; background: #00f2ff; box-shadow: 0 0 15px #00f2ff; animation: scan-move 2s linear infinite; }
-        @keyframes scan-move { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
     </style>
 </head>
 <body>
@@ -43,10 +38,7 @@
         const Icon = ({ name, className = "w-6 h-6", color = "currentColor" }) => {
             const icons = {
                 home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
-                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM4 8v10h16V8H4z" />,
-                portal: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10M12 22a10 10 0 0 1-10-10"/><circle cx="12" cy="12" r="3"/></React.Fragment>,
-                brush: <React.Fragment><path d="M12 2a10 10 0 0 0-10 10c0 5.523 4.477 10 10 10s10-4.477 10-10S17.523 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="3"/></React.Fragment>,
-                fingerprint: <React.Fragment><path d="M2 12a10 10 0 0 1 20 0M7 12a5 5 0 0 1 10 0M5 8a8 8 0 0 1 14 0M9 16a3 3 0 0 1 6 0M12 12v4" /></React.Fragment>,
+                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />,
                 shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
                 lock: <path d="M7 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />
             };
@@ -55,7 +47,6 @@
 
         const App = () => {
             const [activeTab, setActiveTab] = useState('home');
-            const [isScanning, setIsScanning] = useState(false);
             const [unlocked, setUnlocked] = useState(false);
             const qrRef = useRef(null);
 
@@ -66,24 +57,21 @@
                 }
             }, [activeTab]);
 
-            const startScan = () => {
-                setIsScanning(true);
-                setTimeout(() => { setIsScanning(false); setUnlocked(true); }, 2000);
-            };
-
             return (
                 <div className="app-container">
+                    {/* CABECERA */}
                     <header className="h-32 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 pt-8">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Protocolo</p>
                             <h1 className="text-xl font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-xl">
+                        {/* IMAGEN PRINCIPAL */}
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
                             <img src="edkultra.svg" className="w-full h-full object-cover" alt="Logo" />
                         </div>
                     </header>
 
-                    <main className="flex-grow overflow-y-auto scrollbar-hide px-6 pt-6 pb-32">
+                    <main className="flex-grow overflow-y-auto px-6 pt-6 pb-32">
                         {activeTab === 'home' && (
                             <div className="space-y-6 animate-in">
                                 <div className="master-card bg-gradient-to-br from-blue-600 to-cyan-900 border-none min-h-[180px] flex flex-col justify-end">
@@ -91,31 +79,7 @@
                                     <p className="text-xs font-bold opacity-60">SISTEMA OPTIMIZADO</p>
                                 </div>
                                 <div className="master-card flex flex-col items-center gap-4 text-center">
-                                    <p className="text-[10px] font-black uppercase opacity-40 italic">Acceso Rápido</p>
                                     <div className="p-3 bg-white rounded-2xl"><div id="share-qr" ref={qrRef}></div></div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'secure' && (
-                            <div className="animate-in space-y-6 flex flex-col h-full">
-                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="shield" className="text-cyan-400" /> Seguridad</h2>
-                                <div className="master-card flex-grow flex flex-col items-center justify-center min-h-[400px]">
-                                    {!unlocked ? (
-                                        <div className="text-center space-y-8">
-                                            <div className="relative w-40 h-40 mx-auto rounded-[3rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer" onMouseDown={startScan} onTouchStart={startScan}>
-                                                {isScanning && <div className="electric-laser" />}
-                                                <Icon name="fingerprint" className={`w-20 h-20 transition-all ${isScanning ? 'text-cyan-400 shadow-[0_0_15px_cyan]' : 'opacity-20'}`} />
-                                            </div>
-                                            <p className="text-xs font-black uppercase tracking-widest">Pulsar para escanear</p>
-                                        </div>
-                                    ) : (
-                                        <div className="text-center space-y-6 animate-in">
-                                            <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/40 rounded-2xl flex items-center justify-center mx-auto text-cyan-400"><Icon name="lock" className="w-8 h-8" /></div>
-                                            <h3 className="text-xl font-black italic uppercase">Núcleo Desbloqueado</h3>
-                                            <button onClick={() => setUnlocked(false)} className="py-3 px-8 bg-white text-black rounded-xl font-black text-[10px] uppercase w-full">Cerrar</button>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )}
@@ -126,7 +90,8 @@
                                 <div className="master-card bg-gradient-to-br from-purple-600 to-blue-900 min-h-[220px] flex flex-col justify-between">
                                     <div className="flex justify-between items-start">
                                         <p className="text-xs font-bold opacity-70 italic tracking-widest">EDK MASTER</p>
-                                        <div className="w-12 h-12 rounded-xl border border-white/20 overflow-hidden">
+                                        <div className="w-12 h-12 rounded-xl border border-white/20 overflow-hidden bg-slate-800">
+                                            {/* IMAGEN EN PERFIL */}
                                             <img src="edkultra.svg" className="w-full h-full object-cover" alt="User" />
                                         </div>
                                     </div>
@@ -136,14 +101,10 @@
                         )}
                     </main>
 
+                    {/* DOCK INFERIOR */}
                     <nav className="absolute bottom-0 w-full h-24 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 flex justify-around items-center px-4">
-                        <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 ${activeTab === 'home' ? 'text-cyan-400' : 'opacity-40'}`}><Icon name="home" className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Home</span></button>
-                        <button onClick={() => setActiveTab('identity')} className={`flex flex-col items-center gap-1 ${activeTab === 'identity' ? 'text-cyan-400' : 'opacity-40'}`}><Icon name="id" className="w-5 h-5" /><span className="text-[8px] font-black uppercase">ID</span></button>
-                        <div className="relative -top-8 bg-slate-900 p-2 rounded-3xl border border-white/10 shadow-2xl">
-                            <button onClick={() => setActiveTab('secure')} className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activeTab === 'secure' ? 'bg-white text-black' : 'bg-slate-800'}`}><Icon name="shield" /></button>
-                        </div>
-                        <button onClick={() => setActiveTab('home')} className="opacity-40 flex flex-col items-center gap-1"><Icon name="brush" className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Temas</span></button>
-                        <button onClick={() => setActiveTab('home')} className="opacity-40 flex flex-col items-center gap-1"><Icon name="portal" className="w-5 h-5" /><span className="text-[8px] font-black uppercase">AR</span></button>
+                        <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center ${activeTab === 'home' ? 'text-cyan-400' : 'opacity-40'}`}><Icon name="home" /><span className="text-[8px] font-black uppercase">Home</span></button>
+                        <button onClick={() => setActiveTab('identity')} className={`flex flex-col items-center ${activeTab === 'identity' ? 'text-cyan-400' : 'opacity-40'}`}><Icon name="id" /><span className="text-[8px] font-black uppercase">ID</span></button>
                     </nav>
                 </div>
             );
