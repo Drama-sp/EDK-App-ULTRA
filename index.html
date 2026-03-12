@@ -3,24 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v1.2 Secure Update</title>
+    <title>EDK APP ULTRA Pro - v1.9.3 Fixed Icons</title>
     
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="edkultra.svg">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
+    <link rel="apple-touch-icon" href="edkultra.svg">
     
     <meta name="theme-color" content="#020617">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="EDK ULTRA">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
     
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.fb = { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, collection, query, serverTimestamp, deleteDoc };
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap');
         
@@ -34,123 +41,159 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            width: 100vw;
         }
 
-        .app-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
+        .app-container { 
+            position: relative; 
+            width: 100%; 
+            height: 100%; 
             max-width: 410px; 
-            max-height: 890px;
-            background-color: #020617;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 0 80px rgba(0,0,0,0.9);
+            background-color: #020617; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
         }
 
-        @media (min-width: 640px) {
-            .app-container {
-                border: 12px solid #1e293b;
-                border-radius: 3.5rem;
-            }
+        @media (min-width: 640px) { 
+            .app-container { 
+                border: 12px solid #1e293b; 
+                border-radius: 3.5rem; 
+                height: 890px; 
+            } 
         }
 
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .animate-in { animation: slideUp 0.4s ease-out forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-
         .master-card { 
             background: rgba(255, 255, 255, 0.03); 
             border: 1px solid rgba(255, 255, 255, 0.08); 
-            backdrop-filter: blur(25px);
-            border-radius: 2.5rem;
+            backdrop-filter: blur(25px); 
+            border-radius: 2.5rem; 
+            padding: 1.5rem; 
+            position: relative; 
+        }
+
+        .animate-in { animation: slideUp 0.4s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Noticias Ticker */
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-220%); }
+        }
+        .ticker-text {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 25s linear infinite;
+        }
+
+        /* Cloak Mode Styles */
+        .cloak-screen {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'JetBrains Mono', monospace;
             padding: 2rem;
-            width: 100%;
-            overflow: hidden;
-            touch-action: pan-y;
-            position: relative;
-        }
-
-        @keyframes electric-pulse {
-            0% { box-shadow: 0 0 0px #00f2ff; }
-            50% { box-shadow: 0 0 30px #00f2ff, inset 0 0 15px #00f2ff; }
-            100% { box-shadow: 0 0 0px #00f2ff; }
-        }
-        .touch-active-glow {
-            animation: electric-pulse 1s infinite;
-            background: rgba(0, 242, 255, 0.1) !important;
-            border-color: #00f2ff !important;
-        }
-
-        @keyframes scan-move {
-            0% { top: 0%; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-        .electric-laser {
-            position: absolute;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: #00f2ff;
-            box-shadow: 0 0 15px #00f2ff, 0 0 30px #00f2ff;
-            animation: scan-move 2s linear infinite;
-            z-index: 20;
-        }
-
-        .progress-ring {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
             height: 100%;
-            transform: rotate(-90deg);
-            pointer-events: none;
-        }
-        .progress-ring-circle {
-            stroke: #00f2ff;
-            stroke-width: 4;
-            fill: transparent;
-            stroke-dasharray: 565; 
-            stroke-dashoffset: 565;
-            transition: stroke-dashoffset 2s linear;
-        }
-        .scanning .progress-ring-circle {
-            stroke-dashoffset: 0;
+            display: flex;
+            flex-direction: column;
+            font-size: 12px;
+            overflow: hidden;
         }
 
-        .identity-card-glow { box-shadow: 0 0 30px var(--card-glow-color); }
-        #share-qr img { margin: 0 auto; border-radius: 1.2rem; border: 8px solid white; }
+        /* Alerta de Manipulación */
+        .tamper-alert {
+            position: fixed;
+            inset: 0;
+            background: rgba(127, 29, 29, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            animation: pulse-red 1s infinite alternate;
+        }
+
+        @keyframes pulse-red {
+            from { background: rgba(127, 29, 29, 0.95); }
+            to { background: rgba(185, 28, 28, 0.95); }
+        }
+
+        /* Cristal Líquido Dinámico */
+        .liquid-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            background: #000;
+            overflow: hidden;
+            border-radius: 2.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .liquid-base {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(circle at center, #0a0f1e 0%, #000 70%);
+            transition: transform 0.1s ease-out;
+        }
+
+        .liquid-blob {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+            opacity: 0.15;
+            filter: blur(40px);
+            border-radius: 50%;
+            pointer-events: none;
+            transition: transform 0.2s ease-out;
+        }
+
+        /* Biometric Effects */
+        .progress-ring-circle { 
+            stroke: var(--accent-color); 
+            stroke-width: 4; 
+            fill: transparent; 
+            stroke-dasharray: 565; 
+            stroke-dashoffset: 565; 
+            transition: stroke-dashoffset 2s linear; 
+        }
+        .scanning .progress-ring-circle { stroke-dashoffset: 0; }
+        .electric-laser { 
+            position: absolute; 
+            left: 0; 
+            width: 100%; 
+            height: 4px; 
+            background: var(--accent-color); 
+            box-shadow: 0 0 15px var(--accent-color); 
+            animation: scan-move 2s linear infinite; 
+        }
+        @keyframes scan-move { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
     </style>
 </head>
-<body>
+<body id="app-body">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const SmartImage = ({ src, alt, className }) => {
-            return <img src={src} alt={alt} className={className} onError={(e) => e.target.style.display='none'} />;
-        };
-
         const Icon = ({ name, className = "w-6 h-6", color = "currentColor" }) => {
             const icons = {
                 home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
-                vault: <React.Fragment><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></React.Fragment>,
                 id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM4 8v10h16V8H4z" />,
                 portal: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10M12 22a10 10 0 0 1-10-10"/><circle cx="12" cy="12" r="3"/></React.Fragment>,
-                share: <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/>,
                 brush: <React.Fragment><path d="M12 2a10 10 0 0 0-10 10c0 5.523 4.477 10 10 10s10-4.477 10-10S17.523 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="3"/></React.Fragment>,
-                fingerprint: <React.Fragment><path d="M2 12a10 10 0 0 1 20 0" /><path d="M7 12a5 5 0 0 1 10 0" /><path d="M5 8a8 8 0 0 1 14 0" /><path d="M9 16a3 3 0 0 1 6 0" /><path d="M12 12v4" /><path d="M12 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" /></React.Fragment>,
-                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10M12 8v4M12 16h.01" strokeWidth="2" />,
-                download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />,
-                user: <React.Fragment><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></React.Fragment>,
-                lock: <path d="M7 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />
+                fingerprint: <React.Fragment><path d="M2 12a10 10 0 0 1 20 0M7 12a5 5 0 0 1 10 0M5 8a8 8 0 0 1 14 0M9 16a3 3 0 0 1 6 0M12 12v4" /></React.Fragment>,
+                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
+                eye: <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />,
+                cpu: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM9 9h6v6H9V9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3" />,
+                alert: <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeWidth="2" />,
+                unlock: <path d="M7 11V7a5 5 0 0 1 9.9-1M17 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />,
+                user: <React.Fragment><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></React.Fragment>
             };
             return <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
         };
@@ -159,12 +202,19 @@
             const [activeTab, setActiveTab] = useState('home');
             const [theme, setTheme] = useState(() => localStorage.getItem('edk_ultra_theme') || 'blue');
             const [xp, setXp] = useState(() => parseInt(localStorage.getItem('edk_ultra_xp')) || 0);
-            const [isSecureUnlocked, setIsSecureUnlocked] = useState(false);
             const [isScanning, setIsScanning] = useState(false);
-            const [deferredPrompt, setDeferredPrompt] = useState(null);
-
+            const [isUnlocked, setIsUnlocked] = useState(false);
+            const [isCloaked, setIsCloaked] = useState(false);
+            const [tamperDetected, setTamperDetected] = useState(false);
+            const [isOwner, setIsOwner] = useState(false);
+            const [showLoginModal, setShowLoginModal] = useState(true);
+            const [passInput, setPassInput] = useState('');
+            const [tilt, setTilt] = useState({ x: 0, y: 0 });
+            
             const qrRef = useRef(null);
             const scanTimerRef = useRef(null);
+            const cloakTimerRef = useRef(null);
+            const [clickCount, setClickCount] = useState(0);
 
             const themes = {
                 blue: { name: 'Neon', color: '#00d2ff', grad: 'from-blue-600 to-cyan-950' },
@@ -176,6 +226,37 @@
             const activeTheme = themes[theme];
             const level = Math.floor(xp / 100);
 
+            // --- NÚCLEO DE MONITOREO DE INTEGRIDAD (Anti-Tamper) ---
+            useEffect(() => {
+                if (isOwner) return;
+
+                const observer = new MutationObserver(() => {
+                    if (!tamperDetected) setTamperDetected(true);
+                });
+
+                const rootEl = document.getElementById('root');
+                if (rootEl) {
+                    observer.observe(rootEl, { attributes: true, childList: true, subtree: true });
+                }
+
+                const devtoolsCheck = setInterval(() => {
+                    const widthThreshold = window.outerWidth - window.innerWidth > 160;
+                    const heightThreshold = window.outerHeight - window.innerHeight > 160;
+                    if ((widthThreshold || heightThreshold) && !tamperDetected) {
+                        setTamperDetected(true);
+                    }
+                }, 1000);
+
+                const disableContextMenu = (e) => e.preventDefault();
+                document.addEventListener('contextmenu', disableContextMenu);
+
+                return () => {
+                    observer.disconnect();
+                    clearInterval(devtoolsCheck);
+                    document.removeEventListener('contextmenu', disableContextMenu);
+                };
+            }, [tamperDetected, isOwner]);
+
             useEffect(() => {
                 localStorage.setItem('edk_ultra_theme', theme);
                 localStorage.setItem('edk_ultra_xp', xp);
@@ -183,18 +264,28 @@
             }, [theme, xp]);
 
             useEffect(() => {
-                if (activeTab === 'home' && qrRef.current) {
-                    qrRef.current.innerHTML = "";
-                    new QRCode(qrRef.current, { text: window.location.href, width: 180, height: 180 });
-                }
+                const handleOrientation = (e) => {
+                    if (activeTab === 'singularity') {
+                        setTilt({ x: e.gamma || 0, y: e.beta || 0 });
+                    }
+                };
+                window.addEventListener('deviceorientation', handleOrientation);
+                return () => window.removeEventListener('deviceorientation', handleOrientation);
             }, [activeTab]);
+
+            useEffect(() => {
+                if (activeTab === 'home' && qrRef.current && !isCloaked && !tamperDetected) {
+                    qrRef.current.innerHTML = "";
+                    new QRCode(qrRef.current, { text: window.location.href, width: 160, height: 160 });
+                }
+            }, [activeTab, isCloaked, tamperDetected]);
 
             const startScan = (e) => {
                 if (e.cancelable) e.preventDefault();
                 setIsScanning(true);
                 scanTimerRef.current = setTimeout(() => {
                     setIsScanning(false);
-                    setIsSecureUnlocked(true);
+                    setIsUnlocked(true);
                     setXp(p => p + 30);
                 }, 2000); 
             };
@@ -204,66 +295,183 @@
                 setIsScanning(false);
             };
 
-            const getRankInfo = () => {
-                if (level < 5) return { name: 'BRONCE', color: 'from-orange-700 to-orange-900' };
-                if (level < 15) return { name: 'PLATA', color: 'from-slate-400 to-slate-600' };
-                if (level < 30) return { name: 'ORO', color: 'from-yellow-400 to-yellow-700' };
-                return { name: 'EDK ULTRA ELITE', color: 'from-purple-600 via-blue-500 to-cyan-400' };
+            const handleCloakClick = () => {
+                const newCount = clickCount + 1;
+                setClickCount(newCount);
+                if (cloakTimerRef.current) clearTimeout(cloakTimerRef.current);
+                if (newCount === 3) {
+                    setIsCloaked(false);
+                    setClickCount(0);
+                } else {
+                    cloakTimerRef.current = setTimeout(() => setClickCount(0), 500);
+                }
             };
 
-            const rank = getRankInfo();
+            const handleOwnerAuth = () => {
+                if (passInput === '1234') {
+                    setIsOwner(true);
+                }
+                setShowLoginModal(false);
+            };
+
+            // MODAL DE LOGIN INICIAL
+            if (showLoginModal) {
+                return (
+                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-2xl">
+                        <div className="master-card w-full max-w-[320px] text-center space-y-6 border-white/20">
+                            <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mx-auto text-blue-400">
+                                <Icon name="user" className="w-8 h-8" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black uppercase italic italic tracking-tighter">Identidad Propietario</h2>
+                                <p className="text-[10px] opacity-40 uppercase font-bold mt-1">Introduzca clave master para acceso ilimitado</p>
+                            </div>
+                            <input 
+                                type="password" 
+                                placeholder="Clave Master..." 
+                                value={passInput}
+                                onChange={(e) => setPassInput(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center font-mono text-xl focus:outline-none focus:border-blue-500 transition-all text-white"
+                            />
+                            <div className="flex flex-col gap-2">
+                                <button 
+                                    onClick={handleOwnerAuth}
+                                    className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl active:scale-95 transition-transform"
+                                >
+                                    Autenticar Acceso
+                                </button>
+                                <button 
+                                    onClick={() => setShowLoginModal(false)}
+                                    className="w-full bg-transparent text-white/40 py-2 text-[9px] font-bold uppercase tracking-widest"
+                                >
+                                    Ignorar (Acceso Usuario)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Pantalla de Alerta SOSPECHOSA
+            if (tamperDetected && !isOwner) {
+                return (
+                    <div className="tamper-alert font-black">
+                        <div className="bg-white text-red-700 p-6 rounded-full mb-8 shadow-[0_0_50px_rgba(255,255,255,0.5)]">
+                            <Icon name="alert" className="w-16 h-16" color="currentColor" />
+                        </div>
+                        <h1 className="text-3xl uppercase italic tracking-tighter mb-4">SECURITY BREACH</h1>
+                        <p className="text-xl uppercase italic leading-none text-white shadow-lg">INTENTO SOSPECHOSO DE CAMBIOS EN EL CÓDIGO</p>
+                        <p className="mt-12 text-[10px] opacity-60 uppercase font-mono tracking-widest italic">Protocolo EDK: Acceso Restringido Temporalmente</p>
+                        
+                        <div className="flex flex-col gap-4 mt-8 w-full max-w-[280px]">
+                            <button 
+                                onClick={() => window.location.reload()} 
+                                className="px-8 py-4 bg-white text-red-700 rounded-2xl uppercase text-xs font-black shadow-2xl active:scale-95 transition-transform"
+                            >
+                                Reiniciar Núcleo
+                            </button>
+                            
+                            <button 
+                                onClick={() => setTamperDetected(false)} 
+                                className="flex items-center justify-center gap-2 px-8 py-3 bg-red-900/40 border border-white/20 text-white/80 rounded-2xl uppercase text-[9px] font-bold hover:bg-red-800/60 active:scale-95 transition-all"
+                            >
+                                <Icon name="unlock" className="w-3 h-3" />
+                                Forzar Desbloqueo Manual
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (isCloaked) {
+                return (
+                    <div className="app-container no-select cloak-screen" onClick={handleCloakClick}>
+                        <p>> BOOT_ERROR: 0x800F0922</p>
+                        <p>> SYSTEM_RECOVERY_MODE: ACTIVE</p>
+                        <p className="mt-4">> [||||||||||..........] 45%</p>
+                        <p className="mt-8">> Terminating interface...<span className="inline-block w-2 h-4 bg-green-500 animate-pulse ml-1"></span></p>
+                    </div>
+                );
+            }
 
             return (
                 <div className="app-container animate-in no-select">
-                    <header className="flex-shrink-0 h-24 bg-slate-950/80 backdrop-blur-xl flex items-end px-8 pb-4 border-b border-white/5">
-                        <div className="flex justify-between items-center w-full">
-                            <div>
-                                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Acceso EDK</p>
-                                <h1 className="text-xl font-extrabold italic uppercase leading-none">EDK APP ULTRA</h1>
-                            </div>
-                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shadow-lg active:scale-90 transition-transform cursor-pointer" onClick={() => setXp(p => p + 10)}>
-                                <SmartImage src="edkultra.svg" alt="Logo" className="w-full h-full object-cover" />
-                            </div>
+                    <header className="h-32 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 pt-8 border-b border-white/5">
+                        <div onClick={() => setXp(p => p + 5)}>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Protocolo v1.9.3 {isOwner ? '• MASTER' : ''}</p>
+                            <h1 className="text-xl font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
+                        </div>
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
+                            <img src="edkultra.svg" className="w-full h-full object-cover" alt="Logo" />
                         </div>
                     </header>
 
-                    <main className="flex-grow overflow-y-auto scrollbar-hide px-6 pt-6 pb-32">
+                    <div className="bg-slate-900/50 border-b border-white/5 h-8 flex items-center overflow-hidden">
+                        <div className="bg-blue-600 h-full flex items-center px-3 z-10 shadow-[5px_0_15px_rgba(0,0,0,0.5)]">
+                            <span className="text-[8px] font-black uppercase tracking-tighter">COMUNIDAD EDK</span>
+                        </div>
+                        <div className="flex-grow">
+                            <p className="ticker-text text-[9px] font-bold text-white/80 italic">
+                                JOIN MY NEW ROBLOX COMMUNITY EDKSTUDIOS BY MUNEEB_ALY • JOIN MY NEW ROBLOX COMMUNITY EDKSTUDIOS BY MUNEEB_ALY •
+                            </p>
+                        </div>
+                    </div>
+
+                    <main className="flex-grow overflow-y-auto scrollbar-hide px-6 pt-4 pb-32">
                         {activeTab === 'home' && (
                             <div className="space-y-6 animate-in">
-                                <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[200px] flex flex-col justify-end shadow-2xl`}>
-                                    <h2 className="text-3xl font-black italic mb-1 uppercase tracking-tighter">ULTRA v1.2</h2>
-                                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-6">Status: Optimizado</p>
+                                <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[180px] flex flex-col justify-end shadow-2xl`}>
+                                    <h2 className="text-3xl font-black italic uppercase leading-none mb-1">SINGULARITY</h2>
+                                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">{isOwner ? 'Owner Privileges: Active' : 'Integridad: Protegida'}</p>
                                 </div>
-                                <div className="master-card flex flex-col items-center gap-6 text-center">
-                                    <p className="text-[10px] font-black uppercase opacity-40 italic">Enlace de Acceso</p>
-                                    <div className="p-4 bg-white rounded-3xl inline-block shadow-2xl"><div id="share-qr" ref={qrRef}></div></div>
-                                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">Protocolo ULTRA-Share</p>
+                                <div className="master-card flex flex-col items-center gap-4 text-center">
+                                    <p className="text-[10px] font-black uppercase opacity-40 italic">Acceso Táctico</p>
+                                    <div className="p-3 bg-white rounded-2xl shadow-xl"><div id="share-qr" ref={qrRef}></div></div>
                                 </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'singularity' && (
+                            <div className="animate-in space-y-6">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="cpu" color={activeTheme.color} /> Cristal Líquido</h2>
+                                <div className="liquid-container">
+                                    <div className="liquid-base" style={{ transform: `translate(${tilt.x * 2}px, ${tilt.y * 2}px)` }}></div>
+                                    <div className="liquid-blob" style={{ transform: `translate(${tilt.x * 5}px, ${tilt.y * 5}px)` }}></div>
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <div className="master-card border-white/5 bg-white/5 backdrop-blur-md p-6 text-center shadow-2xl" style={{ transform: `translate(${tilt.x * -1}px, ${tilt.y * -1}px)` }}>
+                                            <p className="text-[8px] font-black opacity-30 mb-2 uppercase">Core Data</p>
+                                            <h3 className="text-2xl font-extrabold italic uppercase tracking-tighter">FLUID INTERFACE</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-center opacity-40 uppercase font-black tracking-widest">Inclina tu móvil para desplazar el líquido</p>
                             </div>
                         )}
 
                         {activeTab === 'secure' && (
                             <div className="animate-in space-y-6 h-full flex flex-col">
-                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="shield" className="w-7 h-7" color={activeTheme.color} /> Zona Segura</h2>
-                                <div className="master-card flex-grow flex flex-col items-center justify-center min-h-[500px]">
-                                    {!isSecureUnlocked ? (
-                                        <div className="w-full space-y-12 text-center">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="shield" color={activeTheme.color} /> Seguridad</h2>
+                                    <button onClick={() => setIsCloaked(true)} className="bg-white/5 border border-white/10 p-3 rounded-xl active:scale-90"><Icon name="eye" className="w-5 h-5 text-gray-400" /></button>
+                                </div>
+                                <div className="master-card flex-grow flex flex-col items-center justify-center min-h-[400px]">
+                                    {!isUnlocked ? (
+                                        <div className="text-center space-y-12">
                                             <div 
-                                                className={`relative w-48 h-48 mx-auto rounded-[4rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-500 ${isScanning ? 'touch-active-glow scale-105' : 'active:scale-95'}`}
-                                                onMouseDown={startScan} onMouseUp={cancelScan} onMouseLeave={cancelScan}
-                                                onTouchStart={startScan} onTouchEnd={cancelScan}
+                                                className={`relative w-44 h-44 mx-auto rounded-[3.5rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer transition-all ${isScanning ? 'scale-105 shadow-[0_0_30px_rgba(0,242,255,0.2)]' : 'active:scale-95'}`}
+                                                onMouseDown={startScan} onTouchStart={startScan} onMouseUp={cancelScan} onTouchEnd={cancelScan}
                                             >
-                                                {isScanning && <div className="electric-laser"></div>}
-                                                <svg className={`progress-ring ${isScanning ? 'scanning' : ''}`}><circle className="progress-ring-circle" r="90" cx="96" cy="96" /></svg>
-                                                <Icon name="fingerprint" className={`w-28 h-28 transition-all ${isScanning ? 'text-[#00f2ff] drop-shadow-[0_0_15px_#00f2ff]' : 'opacity-30'}`} color={isScanning ? "#00f2ff" : "#fff"} />
+                                                {isScanning && <div className="electric-laser" />}
+                                                <svg className={`progress-ring absolute inset-0 w-full h-full ${isScanning ? 'scanning' : ''}`}><circle className="progress-ring-circle" r="90" cx="88" cy="88" /></svg>
+                                                <Icon name="fingerprint" className={`w-24 h-24 transition-all duration-500 ${isScanning ? 'text-cyan-400 drop-shadow-[0_0_15px_#00f2ff]' : 'opacity-20'}`} color={isScanning ? "#00f2ff" : "#fff"} />
                                             </div>
-                                            <h3 className={`text-sm font-black uppercase italic tracking-[0.3em] ${isScanning ? 'text-[#00f2ff]' : 'text-white'}`}>{isScanning ? 'Validando Biometría...' : 'Autorizar Touch ID'}</h3>
+                                            <h3 className={`text-sm font-black uppercase italic tracking-widest ${isScanning ? 'text-cyan-400' : ''}`}>{isScanning ? 'Validando...' : 'Mantener Huella'}</h3>
                                         </div>
                                     ) : (
-                                        <div className="w-full space-y-8 text-center animate-in">
-                                            <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/40 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 shadow-lg"><Icon name="lock" className="w-8 h-8" /></div>
-                                            <h3 className="text-2xl font-black italic uppercase">Acceso de Élite</h3>
-                                            <button onClick={() => setIsSecureUnlocked(false)} className="py-4 px-8 bg-white text-black rounded-2xl font-black text-[10px] uppercase w-full shadow-xl">Bloquear Núcleo</button>
+                                        <div className="text-center space-y-8 animate-in">
+                                            <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/40 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 shadow-xl"><Icon name="lock" className="w-8 h-8" /></div>
+                                            <h3 className="text-2xl font-black italic uppercase">Bóveda Abierta</h3>
+                                            <button onClick={() => setIsUnlocked(false)} className="py-4 px-8 bg-white text-black rounded-2xl font-black text-[10px] uppercase w-full shadow-2xl active:scale-95 transition-transform">Bloquear</button>
                                         </div>
                                     )}
                                 </div>
@@ -272,17 +480,17 @@
 
                         {activeTab === 'identity' && (
                             <div className="space-y-6 animate-in">
-                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" className="w-7 h-7" color={activeTheme.color} /> Identidad</h2>
-                                <div className={`master-card bg-gradient-to-br ${rank.color} min-h-[220px] shadow-2xl`}>
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" color={activeTheme.color} /> Perfil</h2>
+                                <div className={`master-card bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 min-h-[220px] shadow-2xl`}>
                                     <div className="flex justify-between items-start mb-10">
-                                        <div><p className="text-[9px] font-black uppercase opacity-60">ULTRA Identity v1.2</p><p className="text-[11px] font-bold tracking-[0.3em]">{rank.name}</p></div>
+                                        <div><p className="text-[9px] font-black uppercase opacity-60">ULTRA Identity v1.9</p><p className="text-[11px] font-bold tracking-[0.3em]">{isOwner ? 'EDK MASTER OWNER' : level >= 10 ? 'AGENTE ÉLITE' : 'RECLUTA EDK'}</p></div>
                                         <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/20 p-1.5 backdrop-blur-md border border-white/20">
-                                            <SmartImage src="edkultra.svg" alt="User" className="w-full h-full object-cover rounded-lg" />
+                                            <img src="edkultra.svg" alt="User" className="w-full h-full object-cover rounded-lg" />
                                         </div>
                                     </div>
-                                    <h3 className="text-3xl font-black italic uppercase tracking-tighter">ULTRA MASTER</h3>
+                                    <h3 className="text-3xl font-black italic uppercase tracking-tighter">{isOwner ? 'MUNEEB_ALY' : 'ULTRA MASTER'}</h3>
                                     <div className="flex justify-between items-end mt-6">
-                                        <div className="text-left"><p className="text-[7px] font-black uppercase opacity-50">Sincronización</p><p className="text-xs font-mono font-bold">{xp} XP</p></div>
+                                        <div className="text-left"><p className="text-[7px] font-black uppercase opacity-50">Sync</p><p className="text-xs font-mono font-bold">{xp} XP</p></div>
                                         <div className="text-right"><p className="text-[7px] font-black uppercase opacity-50">Nivel</p><p className="text-xl font-black italic">LVL {level}</p></div>
                                     </div>
                                 </div>
@@ -290,30 +498,14 @@
                             </div>
                         )}
 
-                        {activeTab === 'portal' && (
-                            <div className="space-y-6 animate-in h-full flex flex-col">
-                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="portal" className="w-7 h-7" color={activeTheme.color} /> Portal AR</h2>
-                                <div className="master-card flex-grow relative p-0 overflow-hidden bg-black min-h-[400px]">
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="relative animate-bounce text-center">
-                                            <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden mx-auto bg-slate-900">
-                                                <SmartImage src="edkultra.svg" alt="AR" className="w-full h-full object-cover" />
-                                            </div>
-                                            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em]">ULTRA Projection</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
                         {activeTab === 'themes' && (
                             <div className="space-y-6 animate-in">
-                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="brush" className="w-7 h-7" color={activeTheme.color} /> Temas</h2>
-                                <div className="master-card grid grid-cols-2 gap-6 justify-items-center shadow-xl">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="brush" color={activeTheme.color} /> Temas</h2>
+                                <div className="master-card grid grid-cols-2 gap-4 justify-items-center shadow-xl">
                                     {Object.entries(themes).map(([id, t]) => (
-                                        <div key={id} onClick={() => setTheme(id)} className="flex flex-col items-center gap-3 cursor-pointer">
-                                            <div className={`w-16 h-16 rounded-[22px] border-4 ${theme === id ? 'border-white scale-110 shadow-2xl' : 'border-transparent opacity-40'}`} style={{ backgroundColor: t.color }}></div>
-                                            <span className={`text-[9px] font-black uppercase ${theme === id ? 'text-white' : 'text-slate-500'}`}>{t.name}</span>
+                                        <div key={id} onClick={() => setTheme(id)} className="flex flex-col items-center gap-3 cursor-pointer group">
+                                            <div className={`w-14 h-14 rounded-[20px] border-4 transition-all ${theme === id ? 'border-white scale-110 shadow-2xl' : 'border-transparent opacity-40'}`} style={{ backgroundColor: t.color }}></div>
+                                            <span className={`text-[8px] font-black uppercase tracking-widest ${theme === id ? 'text-white' : 'text-slate-500'}`}>{t.name}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -321,14 +513,14 @@
                         )}
                     </main>
 
-                    <nav className="flex-shrink-0 absolute bottom-0 left-0 w-full h-24 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 px-2 flex justify-around items-center z-[100] safe-bottom">
-                        <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'home' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'home' ? activeTheme.color : 'white'}}><Icon name="home" className="w-5 h-5" /><span className="text-[5px] font-black uppercase">Home</span></button>
-                        <button onClick={() => setActiveTab('identity')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'identity' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'identity' ? activeTheme.color : 'white'}}><Icon name="id" className="w-5 h-5" /><span className="text-[5px] font-black uppercase">Identidad</span></button>
-                        <div className="relative -top-8 flex p-2 bg-slate-900/80 backdrop-blur-2xl rounded-[2rem] border border-white/10 shadow-2xl">
-                            <button onClick={() => setActiveTab('secure')} className={`w-12 h-12 rounded-[1.5rem] flex items-center justify-center transition-all ${activeTab === 'secure' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-slate-800 text-white'}`}><Icon name="shield" color={activeTab === 'secure' ? '#000' : '#fff'} /></button>
+                    <nav className="absolute bottom-0 w-full h-24 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 flex justify-around items-center px-2 z-[100] safe-bottom">
+                        <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'home' ? '' : 'opacity-40'}`} style={{color: activeTab === 'home' ? activeTheme.color : 'white'}}><Icon name="home" className="w-4 h-4" /><span className="text-[5px] font-black uppercase">Home</span></button>
+                        <button onClick={() => setActiveTab('singularity')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'singularity' ? '' : 'opacity-40'}`} style={{color: activeTab === 'singularity' ? activeTheme.color : 'white'}}><Icon name="cpu" className="w-4 h-4" /><span className="text-[5px] font-black uppercase">Liquid</span></button>
+                        <div className="relative -top-8 flex p-2 bg-slate-900/80 backdrop-blur-2xl rounded-[1.8rem] border border-white/10 shadow-2xl">
+                            <button onClick={() => setActiveTab('secure')} className={`w-12 h-12 rounded-[1.4rem] flex items-center justify-center transition-all ${activeTab === 'secure' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-slate-800 text-white'}`}><Icon name="shield" color={activeTab === 'secure' ? '#000' : '#fff'} /></button>
                         </div>
-                        <button onClick={() => setActiveTab('themes')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'themes' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'themes' ? activeTheme.color : 'white'}}><Icon name="brush" className="w-5 h-5" /><span className="text-[5px] font-black uppercase">Temas</span></button>
-                        <button onClick={() => setActiveTab('portal')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'portal' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'portal' ? activeTheme.color : 'white'}}><Icon name="portal" className="w-5 h-5" /><span className="text-[5px] font-black uppercase">Portal</span></button>
+                        <button onClick={() => setActiveTab('themes')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'themes' ? '' : 'opacity-40'}`} style={{color: activeTab === 'themes' ? activeTheme.color : 'white'}}><Icon name="brush" className="w-5 h-5" /><span className="text-[6px] font-black uppercase">Temas</span></button>
+                        <button onClick={() => setActiveTab('identity')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'identity' ? '' : 'opacity-40'}`} style={{color: activeTab === 'identity' ? activeTheme.color : 'white'}}><Icon name="id" className="w-4 h-4" /><span className="text-[5px] font-black uppercase">Perfil</span></button>
                     </nav>
                 </div>
             );
