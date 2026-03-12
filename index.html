@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v2.0 Admin Console</title>
+    <title>EDK APP ULTRA Pro - v2.0.2 Stable Update</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
@@ -175,6 +175,31 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        // --- Lógica de Actualización Segura (v2.0.2) ---
+        const initServiceWorker = async () => {
+            if ('serviceWorker' in navigator) {
+                try {
+                    // Usar try-catch para manejar InvalidStateError en previsualizaciones
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        registration.update().catch(() => {});
+                    }
+                } catch (e) {
+                    // El documento está en un estado que no permite acceder a SW (común en iframes)
+                    console.warn("ServiceWorker Access Restricted");
+                }
+
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        window.location.reload();
+                        refreshing = true;
+                    }
+                });
+            }
+        };
+        initServiceWorker();
+
         const Icon = ({ name, className = "w-6 h-6", color = "currentColor" }) => {
             const icons = {
                 home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
@@ -206,7 +231,6 @@
             const [passInput, setPassInput] = useState('');
             const [tilt, setTilt] = useState({ x: 0, y: 0 });
             
-            // Estados Consola Admin
             const [newsMessage, setNewsMessage] = useState("JOIN MY NEW ROBLOX COMMUNITY EDKSTUDIOS BY MUNEEB_ALY • ");
             const [securityLogs, setSecurityLogs] = useState([]);
             
@@ -224,20 +248,18 @@
             const activeTheme = themes[theme];
             const level = Math.floor(xp / 100);
 
-            // Log de seguridad
             const addSecurityLog = (msg) => {
                 const now = new Date().toLocaleTimeString();
                 setSecurityLogs(prev => [`[${now}] ${msg}`, ...prev].slice(0, 10));
             };
 
-            // --- NÚCLEO DE MONITOREO DE INTEGRIDAD ---
             useEffect(() => {
                 if (isOwner || showLoginModal) return;
 
                 const handleKeyDetection = (e) => {
                     if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85)) {
                         setTamperDetected(true);
-                        addSecurityLog("Detección de Teclado (DevTools)");
+                        addSecurityLog("Alarma: Intento de inspección (Teclado)");
                         e.preventDefault();
                     }
                 };
@@ -248,7 +270,7 @@
                             const rootRemoved = Array.from(mutation.removedNodes).some(node => node.id === 'root');
                             if (rootRemoved) {
                                 setTamperDetected(true);
-                                addSecurityLog("Estructura Root eliminada");
+                                addSecurityLog("Alarma: Estructura Root alterada");
                             }
                         }
                     });
@@ -288,7 +310,7 @@
             const handleOwnerAuth = () => { 
                 if (passInput === '1234') {
                     setIsOwner(true);
-                    addSecurityLog("Acceso Master Autorizado");
+                    addSecurityLog("Consola: Dueño autenticado");
                 }
                 setShowLoginModal(false); 
             };
@@ -337,7 +359,7 @@
                 <div id="app-root-container" className="app-container animate-in no-select">
                     <header className="h-32 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 pt-8 border-b border-white/5">
                         <div onClick={() => setXp(p => p + 5)}>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Protocolo v2.0 {isOwner ? '• MASTER' : ''}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Protocolo v2.0.2 {isOwner ? '• MASTER' : ''}</p>
                             <h1 className="text-xl font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
                         </div>
                         <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
@@ -419,7 +441,7 @@
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" color={activeTheme.color} /> Perfil</h2>
                                 <div className={`master-card bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 min-h-[220px] shadow-2xl`}>
                                     <div className="flex justify-between items-start mb-10">
-                                        <div><p className="text-[9px] font-black uppercase opacity-60">ULTRA Identity v2.0</p><p className="text-[11px] font-bold tracking-[0.3em]">{isOwner ? 'EDK MASTER OWNER' : level >= 10 ? 'AGENTE ÉLITE' : 'RECLUTA EDK'}</p></div>
+                                        <div><p className="text-[9px] font-black uppercase opacity-60">ULTRA Identity v2.0.2</p><p className="text-[11px] font-bold tracking-[0.3em]">{isOwner ? 'EDK MASTER OWNER' : level >= 10 ? 'AGENTE ÉLITE' : 'RECLUTA EDK'}</p></div>
                                         <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/20 p-1.5 backdrop-blur-md border border-white/20">
                                             <img src="edkultra.svg" alt="User" className="w-full h-full object-cover rounded-lg" />
                                         </div>
@@ -438,7 +460,6 @@
                             <div className="space-y-6 animate-in">
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="terminal" color={activeTheme.color} /> Consola Admin</h2>
                                 
-                                {/* Gestión de Noticias */}
                                 <div className="master-card space-y-4">
                                     <p className="text-[10px] font-black uppercase opacity-50">Editor de Noticias Global</p>
                                     <input 
@@ -448,28 +469,26 @@
                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-mono text-xs focus:outline-none focus:border-blue-500 text-white"
                                         placeholder="Escribe el nuevo mensaje..."
                                     />
-                                    <button onClick={() => addSecurityLog("Mensaje de noticias actualizado")} className="w-full py-2 bg-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest">Transmitir Mensaje</button>
+                                    <button onClick={() => addSecurityLog("Noticias actualizadas")} className="w-full py-2 bg-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest">Emitir</button>
                                 </div>
 
-                                {/* Logs de Seguridad */}
                                 <div className="master-card bg-black/40 border-blue-500/20">
                                     <div className="flex justify-between items-center mb-4">
-                                        <p className="text-[10px] font-black uppercase opacity-50">Eventos de Seguridad</p>
+                                        <p className="text-[10px] font-black uppercase opacity-50">Log de Eventos</p>
                                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                                     </div>
                                     <div className="font-mono text-[9px] space-y-2 h-40 overflow-y-auto scrollbar-hide text-green-500/80">
                                         {securityLogs.length > 0 ? securityLogs.map((log, i) => (
                                             <div key={i} className="border-l border-green-500/30 pl-2">{log}</div>
                                         )) : (
-                                            <div className="opacity-30">Esperando eventos...</div>
+                                            <div className="opacity-30">Escuchando red...</div>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* Acciones Rápidas */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <button onClick={() => { setXp(0); addSecurityLog("XP Reseteado"); }} className="master-card p-4 text-[8px] font-black uppercase border-red-500/20 text-red-400">Reset XP</button>
-                                    <button onClick={() => { addSecurityLog("Caché Limpiado"); }} className="master-card p-4 text-[8px] font-black uppercase">Wipe Cache</button>
+                                    <button onClick={() => { setXp(0); addSecurityLog("Reset de XP ejecutado"); }} className="master-card p-4 text-[8px] font-black uppercase border-red-500/20 text-red-400">Wipe XP</button>
+                                    <button onClick={() => { window.location.reload(true); }} className="master-card p-4 text-[8px] font-black uppercase border-blue-500/20 text-blue-400">Hard Update</button>
                                 </div>
                             </div>
                         )}
