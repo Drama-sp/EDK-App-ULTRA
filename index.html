@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v1.9.4 Optimized Update</title>
+    <title>EDK APP ULTRA Pro - v1.9.6 Smart Shield</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
@@ -99,21 +99,15 @@
         .tamper-alert {
             position: fixed;
             inset: 0;
-            background: rgba(127, 29, 29, 0.95);
-            backdrop-filter: blur(15px);
-            z-index: 9999;
+            background: rgba(127, 29, 29, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 99999;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             padding: 2rem;
-            animation: pulse-red 1s infinite alternate;
-        }
-
-        @keyframes pulse-red {
-            from { background: rgba(127, 29, 29, 0.95); }
-            to { background: rgba(185, 28, 28, 0.95); }
         }
 
         .liquid-container {
@@ -175,7 +169,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // Registro de SW optimizado para forzar actualización
+        // Registro de SW optimizado
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').then(reg => {
@@ -183,7 +177,6 @@
                         const installingWorker = reg.installing;
                         installingWorker.onstatechange = () => {
                             if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // Forzar recarga automática si hay nueva versión
                                 window.location.reload();
                             }
                         };
@@ -224,7 +217,6 @@
             
             const qrRef = useRef(null);
             const scanTimerRef = useRef(null);
-            const cloakTimerRef = useRef(null);
             const [clickCount, setClickCount] = useState(0);
 
             const themes = {
@@ -237,18 +229,37 @@
             const activeTheme = themes[theme];
             const level = Math.floor(xp / 100);
 
+            // --- NÚCLEO DE MONITOREO DE INTEGRIDAD REDISEÑADO (v1.9.6) ---
             useEffect(() => {
-                if (isOwner) return;
-                const observer = new MutationObserver(() => { if (!tamperDetected) setTamperDetected(true); });
-                const rootEl = document.getElementById('root');
-                if (rootEl) observer.observe(rootEl, { attributes: true, childList: true, subtree: true });
-                const devtoolsCheck = setInterval(() => {
-                    if ((window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) && !tamperDetected) setTamperDetected(true);
-                }, 1000);
+                // Si eres el dueño o el modal está abierto, no vigilamos aún
+                if (isOwner || showLoginModal) return;
+
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach(mutation => {
+                        // Vigilamos específicamente si alguien intenta borrar elementos raíz o cambiar atributos críticos del body
+                        if (mutation.type === 'childList') {
+                            const rootRemoved = Array.from(mutation.removedNodes).some(node => node.id === 'root');
+                            if (rootRemoved) setTamperDetected(true);
+                        }
+                        if (mutation.type === 'attributes' && (mutation.target.nodeName === 'BODY' || mutation.target.id === 'root')) {
+                            // Si alguien intenta cambiar el estilo del body (ej: ocultar todo) activamos alerta
+                            setTamperDetected(true);
+                        }
+                    });
+                });
+
+                // Observamos cambios estructurales que no provengan de React
+                observer.observe(document.body, { childList: true, attributes: true });
+
+                // Bloqueamos clic derecho para dificultar el acceso al inspector
                 const disableContextMenu = (e) => e.preventDefault();
                 document.addEventListener('contextmenu', disableContextMenu);
-                return () => { observer.disconnect(); clearInterval(devtoolsCheck); document.removeEventListener('contextmenu', disableContextMenu); };
-            }, [tamperDetected, isOwner]);
+
+                return () => {
+                    observer.disconnect();
+                    document.removeEventListener('contextmenu', disableContextMenu);
+                };
+            }, [tamperDetected, isOwner, showLoginModal]);
 
             useEffect(() => {
                 localStorage.setItem('edk_ultra_theme', theme);
@@ -263,24 +274,24 @@
             }, [activeTab]);
 
             useEffect(() => {
-                if (activeTab === 'home' && qrRef.current && !isCloaked && !tamperDetected) {
+                if (activeTab === 'home' && qrRef.current && !isCloaked && !tamperDetected && !showLoginModal) {
                     qrRef.current.innerHTML = "";
                     new QRCode(qrRef.current, { text: window.location.href, width: 160, height: 160 });
                 }
-            }, [activeTab, isCloaked, tamperDetected]);
+            }, [activeTab, isCloaked, tamperDetected, showLoginModal]);
 
             const handleOwnerAuth = () => { if (passInput === '1234') setIsOwner(true); setShowLoginModal(false); };
 
             if (showLoginModal) {
                 return (
                     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-2xl">
-                        <div className="master-card w-full max-w-[320px] text-center space-y-6 border-white/20">
+                        <div className="master-card w-full max-w-[320px] text-center space-y-6 border-white/20 animate-in">
                             <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mx-auto text-blue-400"><Icon name="user" className="w-8 h-8" /></div>
                             <div><h2 className="text-xl font-black uppercase italic tracking-tighter">Identidad Propietario</h2></div>
                             <input type="password" placeholder="Clave Master..." value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center font-mono text-xl focus:outline-none focus:border-blue-500 text-white" />
                             <div className="flex flex-col gap-2">
-                                <button onClick={handleOwnerAuth} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase">Autenticar</button>
-                                <button onClick={() => setShowLoginModal(false)} className="w-full text-white/40 py-2 text-[9px] font-bold uppercase">Acceso Usuario</button>
+                                <button onClick={handleOwnerAuth} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Autenticar</button>
+                                <button onClick={() => setShowLoginModal(false)} className="w-full text-white/40 py-2 text-[9px] font-bold uppercase tracking-widest">Acceso Usuario</button>
                             </div>
                         </div>
                     </div>
@@ -290,10 +301,13 @@
             if (tamperDetected && !isOwner) {
                 return (
                     <div className="tamper-alert font-black">
-                        <div className="bg-white text-red-700 p-6 rounded-full mb-8 shadow-[0_0_50px_rgba(255,255,255,0.5)]"><Icon name="alert" className="w-16 h-16" /></div>
+                        <div className="bg-white text-red-700 p-6 rounded-full mb-8 shadow-[0_0_50px_rgba(255,255,255,0.5)] animate-bounce"><Icon name="alert" className="w-16 h-16" /></div>
                         <h1 className="text-3xl uppercase italic tracking-tighter mb-4">SECURITY BREACH</h1>
                         <p className="text-xl uppercase italic leading-none text-white">INTENTO SOSPECHOSO DE CAMBIOS EN EL CÓDIGO</p>
-                        <button onClick={() => setTamperDetected(false)} className="mt-8 flex items-center justify-center gap-2 px-8 py-3 bg-red-900/40 border border-white/20 text-white/80 rounded-2xl uppercase text-[9px] font-bold">Forzar Desbloqueo</button>
+                        <div className="flex flex-col gap-3 mt-10">
+                            <button onClick={() => window.location.reload()} className="px-10 py-4 bg-white text-red-700 rounded-2xl uppercase text-xs font-black shadow-2xl">Reiniciar Núcleo</button>
+                            <button onClick={() => setTamperDetected(false)} className="px-10 py-3 bg-red-900/40 border border-white/20 text-white/80 rounded-2xl uppercase text-[9px] font-bold">Forzar Desbloqueo</button>
+                        </div>
                     </div>
                 );
             }
@@ -302,17 +316,17 @@
                 return (
                     <div className="app-container no-select cloak-screen" onClick={() => { setClickCount(c => { if(c+1 === 3) setIsCloaked(false); return (c+1)%3; }); setTimeout(() => setClickCount(0), 500); }}>
                         <p>> BOOT_ERROR: 0x800F0922</p>
-                        <p>> [||||||||||..........] 45%</p>
+                        <p>> RECOVERY_STATE: 45%</p>
                         <p className="mt-8">> Terminating interface...<span className="inline-block w-2 h-4 bg-green-500 animate-pulse ml-1"></span></p>
                     </div>
                 );
             }
 
             return (
-                <div className="app-container animate-in no-select">
+                <div id="app-root-container" className="app-container animate-in no-select">
                     <header className="h-32 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 pt-8 border-b border-white/5">
                         <div onClick={() => setXp(p => p + 5)}>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Protocolo v1.9.4 {isOwner ? '• MASTER' : ''}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Protocolo v1.9.6 {isOwner ? '• MASTER' : ''}</p>
                             <h1 className="text-xl font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
                         </div>
                         <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
@@ -394,7 +408,7 @@
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" color={activeTheme.color} /> Perfil</h2>
                                 <div className={`master-card bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 min-h-[220px] shadow-2xl`}>
                                     <div className="flex justify-between items-start mb-10">
-                                        <div><p className="text-[9px] font-black uppercase opacity-60">ULTRA Identity v1.9.4</p><p className="text-[11px] font-bold tracking-[0.3em]">{isOwner ? 'EDK MASTER OWNER' : level >= 10 ? 'AGENTE ÉLITE' : 'RECLUTA EDK'}</p></div>
+                                        <div><p className="text-[9px] font-black uppercase opacity-60">ULTRA Identity v1.9.6</p><p className="text-[11px] font-bold tracking-[0.3em]">{isOwner ? 'EDK MASTER OWNER' : level >= 10 ? 'AGENTE ÉLITE' : 'RECLUTA EDK'}</p></div>
                                         <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/20 p-1.5 backdrop-blur-md border border-white/20">
                                             <img src="edkultra.svg" alt="User" className="w-full h-full object-cover rounded-lg" />
                                         </div>
@@ -441,4 +455,5 @@
         root.render(<App />);
     </script>
 </body>
+</html>
 </html>
