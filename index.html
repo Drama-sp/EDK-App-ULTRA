@@ -3,30 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro</title>
+    <title>EDK APP ULTRA Pro - v1.2 Secure Update</title>
     
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="edkultra.svg">
     <link rel="apple-touch-icon" href="edkultra.svg">
+    <link rel="icon" type="image/svg+xml" href="edkultra.svg">
     
     <meta name="theme-color" content="#020617">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EDK ULTRA">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; margin: 0; overflow: hidden; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .app-container { position: relative; width: 100%; height: 100%; max-width: 410px; background-color: #020617; overflow: hidden; display: flex; flex-direction: column; }
-        @media (min-width: 640px) { .app-container { border: 12px solid #1e293b; border-radius: 3.5rem; height: 890px; } }
-        .master-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(25px); border-radius: 2.5rem; padding: 2rem; position: relative; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #000; 
+            margin: 0; 
+            overflow: hidden; 
+            color: white; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .app-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 410px; 
+            max-height: 890px;
+            background-color: #020617;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 80px rgba(0,0,0,0.9);
+        }
+
+        @media (min-width: 640px) {
+            .app-container {
+                border: 12px solid #1e293b;
+                border-radius: 3.5rem;
+            }
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
         .animate-in { animation: slideUp 0.4s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .master-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            backdrop-filter: blur(25px);
+            border-radius: 2.5rem;
+            padding: 2rem;
+            width: 100%;
+            overflow: hidden;
+            touch-action: pan-y;
+            position: relative;
+        }
+
+        @keyframes electric-pulse {
+            0% { box-shadow: 0 0 0px #00f2ff; }
+            50% { box-shadow: 0 0 30px #00f2ff, inset 0 0 15px #00f2ff; }
+            100% { box-shadow: 0 0 0px #00f2ff; }
+        }
+        .touch-active-glow {
+            animation: electric-pulse 1s infinite;
+            background: rgba(0, 242, 255, 0.1) !important;
+            border-color: #00f2ff !important;
+        }
+
+        @keyframes scan-move {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .electric-laser {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #00f2ff;
+            box-shadow: 0 0 15px #00f2ff, 0 0 30px #00f2ff;
+            animation: scan-move 2s linear infinite;
+            z-index: 20;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+            pointer-events: none;
+        }
+        .progress-ring-circle {
+            stroke: #00f2ff;
+            stroke-width: 4;
+            fill: transparent;
+            stroke-dasharray: 565; 
+            stroke-dashoffset: 565;
+            transition: stroke-dashoffset 2s linear;
+        }
+        .scanning .progress-ring-circle {
+            stroke-dashoffset: 0;
+        }
+
+        .identity-card-glow { box-shadow: 0 0 30px var(--card-glow-color); }
+        #share-qr img { margin: 0 auto; border-radius: 1.2rem; border: 8px solid white; }
     </style>
 </head>
 <body>
@@ -35,11 +134,22 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        const SmartImage = ({ src, alt, className }) => {
+            return <img src={src} alt={alt} className={className} onError={(e) => e.target.style.display='none'} />;
+        };
+
         const Icon = ({ name, className = "w-6 h-6", color = "currentColor" }) => {
             const icons = {
                 home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
-                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />,
-                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
+                vault: <React.Fragment><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></React.Fragment>,
+                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM4 8v10h16V8H4z" />,
+                portal: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10M12 22a10 10 0 0 1-10-10"/><circle cx="12" cy="12" r="3"/></React.Fragment>,
+                share: <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/>,
+                brush: <React.Fragment><path d="M12 2a10 10 0 0 0-10 10c0 5.523 4.477 10 10 10s10-4.477 10-10S17.523 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="3"/></React.Fragment>,
+                fingerprint: <React.Fragment><path d="M2 12a10 10 0 0 1 20 0" /><path d="M7 12a5 5 0 0 1 10 0" /><path d="M5 8a8 8 0 0 1 14 0" /><path d="M9 16a3 3 0 0 1 6 0" /><path d="M12 12v4" /><path d="M12 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" /></React.Fragment>,
+                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10M12 8v4M12 16h.01" strokeWidth="2" />,
+                download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />,
+                user: <React.Fragment><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></React.Fragment>,
                 lock: <path d="M7 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />
             };
             return <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
@@ -47,64 +157,178 @@
 
         const App = () => {
             const [activeTab, setActiveTab] = useState('home');
-            const [unlocked, setUnlocked] = useState(false);
+            const [theme, setTheme] = useState(() => localStorage.getItem('edk_ultra_theme') || 'blue');
+            const [xp, setXp] = useState(() => parseInt(localStorage.getItem('edk_ultra_xp')) || 0);
+            const [isSecureUnlocked, setIsSecureUnlocked] = useState(false);
+            const [isScanning, setIsScanning] = useState(false);
+            const [deferredPrompt, setDeferredPrompt] = useState(null);
+
             const qrRef = useRef(null);
+            const scanTimerRef = useRef(null);
+
+            const themes = {
+                blue: { name: 'Neon', color: '#00d2ff', grad: 'from-blue-600 to-cyan-950' },
+                red: { name: 'Magma', color: '#ff4b2b', grad: 'from-red-600 to-orange-950' },
+                gold: { name: 'Gold', color: '#f9d423', grad: 'from-yellow-500 to-amber-950' },
+                green: { name: 'Matrix', color: '#00ff41', grad: 'from-green-600 to-emerald-950' }
+            };
+
+            const activeTheme = themes[theme];
+            const level = Math.floor(xp / 100);
+
+            useEffect(() => {
+                localStorage.setItem('edk_ultra_theme', theme);
+                localStorage.setItem('edk_ultra_xp', xp);
+                document.documentElement.style.setProperty('--accent-color', activeTheme.color);
+            }, [theme, xp]);
 
             useEffect(() => {
                 if (activeTab === 'home' && qrRef.current) {
                     qrRef.current.innerHTML = "";
-                    new QRCode(qrRef.current, { text: window.location.href, width: 160, height: 160 });
+                    new QRCode(qrRef.current, { text: window.location.href, width: 180, height: 180 });
                 }
             }, [activeTab]);
 
+            const startScan = (e) => {
+                if (e.cancelable) e.preventDefault();
+                setIsScanning(true);
+                scanTimerRef.current = setTimeout(() => {
+                    setIsScanning(false);
+                    setIsSecureUnlocked(true);
+                    setXp(p => p + 30);
+                }, 2000); 
+            };
+
+            const cancelScan = () => {
+                if (scanTimerRef.current) clearTimeout(scanTimerRef.current);
+                setIsScanning(false);
+            };
+
+            const getRankInfo = () => {
+                if (level < 5) return { name: 'BRONCE', color: 'from-orange-700 to-orange-900' };
+                if (level < 15) return { name: 'PLATA', color: 'from-slate-400 to-slate-600' };
+                if (level < 30) return { name: 'ORO', color: 'from-yellow-400 to-yellow-700' };
+                return { name: 'EDK ULTRA ELITE', color: 'from-purple-600 via-blue-500 to-cyan-400' };
+            };
+
+            const rank = getRankInfo();
+
             return (
-                <div className="app-container">
-                    {/* CABECERA */}
-                    <header className="h-32 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 pt-8">
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Protocolo</p>
-                            <h1 className="text-xl font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
-                        </div>
-                        {/* IMAGEN PRINCIPAL */}
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
-                            <img src="edkultra.svg" className="w-full h-full object-cover" alt="Logo" />
+                <div className="app-container animate-in no-select">
+                    <header className="flex-shrink-0 h-24 bg-slate-950/80 backdrop-blur-xl flex items-end px-8 pb-4 border-b border-white/5">
+                        <div className="flex justify-between items-center w-full">
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Acceso EDK</p>
+                                <h1 className="text-xl font-extrabold italic uppercase leading-none">EDK APP ULTRA</h1>
+                            </div>
+                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shadow-lg active:scale-90 transition-transform cursor-pointer" onClick={() => setXp(p => p + 10)}>
+                                <SmartImage src="edkultra.svg" alt="Logo" className="w-full h-full object-cover" />
+                            </div>
                         </div>
                     </header>
 
-                    <main className="flex-grow overflow-y-auto px-6 pt-6 pb-32">
+                    <main className="flex-grow overflow-y-auto scrollbar-hide px-6 pt-6 pb-32">
                         {activeTab === 'home' && (
                             <div className="space-y-6 animate-in">
-                                <div className="master-card bg-gradient-to-br from-blue-600 to-cyan-900 border-none min-h-[180px] flex flex-col justify-end">
-                                    <h2 className="text-3xl font-black italic uppercase">Core v1.2</h2>
-                                    <p className="text-xs font-bold opacity-60">SISTEMA OPTIMIZADO</p>
+                                <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[200px] flex flex-col justify-end shadow-2xl`}>
+                                    <h2 className="text-3xl font-black italic mb-1 uppercase tracking-tighter">ULTRA v1.2</h2>
+                                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-6">Status: Optimizado</p>
                                 </div>
-                                <div className="master-card flex flex-col items-center gap-4 text-center">
-                                    <div className="p-3 bg-white rounded-2xl"><div id="share-qr" ref={qrRef}></div></div>
+                                <div className="master-card flex flex-col items-center gap-6 text-center">
+                                    <p className="text-[10px] font-black uppercase opacity-40 italic">Enlace de Acceso</p>
+                                    <div className="p-4 bg-white rounded-3xl inline-block shadow-2xl"><div id="share-qr" ref={qrRef}></div></div>
+                                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">Protocolo ULTRA-Share</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'secure' && (
+                            <div className="animate-in space-y-6 h-full flex flex-col">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="shield" className="w-7 h-7" color={activeTheme.color} /> Zona Segura</h2>
+                                <div className="master-card flex-grow flex flex-col items-center justify-center min-h-[500px]">
+                                    {!isSecureUnlocked ? (
+                                        <div className="w-full space-y-12 text-center">
+                                            <div 
+                                                className={`relative w-48 h-48 mx-auto rounded-[4rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-500 ${isScanning ? 'touch-active-glow scale-105' : 'active:scale-95'}`}
+                                                onMouseDown={startScan} onMouseUp={cancelScan} onMouseLeave={cancelScan}
+                                                onTouchStart={startScan} onTouchEnd={cancelScan}
+                                            >
+                                                {isScanning && <div className="electric-laser"></div>}
+                                                <svg className={`progress-ring ${isScanning ? 'scanning' : ''}`}><circle className="progress-ring-circle" r="90" cx="96" cy="96" /></svg>
+                                                <Icon name="fingerprint" className={`w-28 h-28 transition-all ${isScanning ? 'text-[#00f2ff] drop-shadow-[0_0_15px_#00f2ff]' : 'opacity-30'}`} color={isScanning ? "#00f2ff" : "#fff"} />
+                                            </div>
+                                            <h3 className={`text-sm font-black uppercase italic tracking-[0.3em] ${isScanning ? 'text-[#00f2ff]' : 'text-white'}`}>{isScanning ? 'Validando Biometría...' : 'Autorizar Touch ID'}</h3>
+                                        </div>
+                                    ) : (
+                                        <div className="w-full space-y-8 text-center animate-in">
+                                            <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/40 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 shadow-lg"><Icon name="lock" className="w-8 h-8" /></div>
+                                            <h3 className="text-2xl font-black italic uppercase">Acceso de Élite</h3>
+                                            <button onClick={() => setIsSecureUnlocked(false)} className="py-4 px-8 bg-white text-black rounded-2xl font-black text-[10px] uppercase w-full shadow-xl">Bloquear Núcleo</button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
 
                         {activeTab === 'identity' && (
                             <div className="space-y-6 animate-in">
-                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" className="text-cyan-400" /> Perfil</h2>
-                                <div className="master-card bg-gradient-to-br from-purple-600 to-blue-900 min-h-[220px] flex flex-col justify-between">
-                                    <div className="flex justify-between items-start">
-                                        <p className="text-xs font-bold opacity-70 italic tracking-widest">EDK MASTER</p>
-                                        <div className="w-12 h-12 rounded-xl border border-white/20 overflow-hidden bg-slate-800">
-                                            {/* IMAGEN EN PERFIL */}
-                                            <img src="edkultra.svg" className="w-full h-full object-cover" alt="User" />
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" className="w-7 h-7" color={activeTheme.color} /> Identidad</h2>
+                                <div className={`master-card bg-gradient-to-br ${rank.color} min-h-[220px] shadow-2xl`}>
+                                    <div className="flex justify-between items-start mb-10">
+                                        <div><p className="text-[9px] font-black uppercase opacity-60">ULTRA Identity v1.2</p><p className="text-[11px] font-bold tracking-[0.3em]">{rank.name}</p></div>
+                                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/20 p-1.5 backdrop-blur-md border border-white/20">
+                                            <SmartImage src="edkultra.svg" alt="User" className="w-full h-full object-cover rounded-lg" />
                                         </div>
                                     </div>
-                                    <h3 className="text-3xl font-black italic uppercase">ULTRA USER</h3>
+                                    <h3 className="text-3xl font-black italic uppercase tracking-tighter">ULTRA MASTER</h3>
+                                    <div className="flex justify-between items-end mt-6">
+                                        <div className="text-left"><p className="text-[7px] font-black uppercase opacity-50">Sincronización</p><p className="text-xs font-mono font-bold">{xp} XP</p></div>
+                                        <div className="text-right"><p className="text-[7px] font-black uppercase opacity-50">Nivel</p><p className="text-xl font-black italic">LVL {level}</p></div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setXp(p => p + 150)} className="master-card p-6 w-full font-black text-[10px] uppercase bg-white/5 border-white/10 active:scale-95 transition-all text-center">Subir Nivel de Datos</button>
+                            </div>
+                        )}
+
+                        {activeTab === 'portal' && (
+                            <div className="space-y-6 animate-in h-full flex flex-col">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="portal" className="w-7 h-7" color={activeTheme.color} /> Portal AR</h2>
+                                <div className="master-card flex-grow relative p-0 overflow-hidden bg-black min-h-[400px]">
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="relative animate-bounce text-center">
+                                            <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden mx-auto bg-slate-900">
+                                                <SmartImage src="edkultra.svg" alt="AR" className="w-full h-full object-cover" />
+                                            </div>
+                                            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em]">ULTRA Projection</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'themes' && (
+                            <div className="space-y-6 animate-in">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="brush" className="w-7 h-7" color={activeTheme.color} /> Temas</h2>
+                                <div className="master-card grid grid-cols-2 gap-6 justify-items-center shadow-xl">
+                                    {Object.entries(themes).map(([id, t]) => (
+                                        <div key={id} onClick={() => setTheme(id)} className="flex flex-col items-center gap-3 cursor-pointer">
+                                            <div className={`w-16 h-16 rounded-[22px] border-4 ${theme === id ? 'border-white scale-110 shadow-2xl' : 'border-transparent opacity-40'}`} style={{ backgroundColor: t.color }}></div>
+                                            <span className={`text-[9px] font-black uppercase ${theme === id ? 'text-white' : 'text-slate-500'}`}>{t.name}</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
                     </main>
 
-                    {/* DOCK INFERIOR */}
-                    <nav className="absolute bottom-0 w-full h-24 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 flex justify-around items-center px-4">
-                        <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center ${activeTab === 'home' ? 'text-cyan-400' : 'opacity-40'}`}><Icon name="home" /><span className="text-[8px] font-black uppercase">Home</span></button>
-                        <button onClick={() => setActiveTab('identity')} className={`flex flex-col items-center ${activeTab === 'identity' ? 'text-cyan-400' : 'opacity-40'}`}><Icon name="id" /><span className="text-[8px] font-black uppercase">ID</span></button>
+                    <nav className="flex-shrink-0 absolute bottom-0 left-0 w-full h-24 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 px-2 flex justify-around items-center z-[100] safe-bottom">
+                        <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'home' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'home' ? activeTheme.color : 'white'}}><Icon name="home" className="w-5 h-5" /><span className="text-[5px] font-black uppercase">Home</span></button>
+                        <button onClick={() => setActiveTab('identity')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'identity' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'identity' ? activeTheme.color : 'white'}}><Icon name="id" className="w-5 h-5" /><span className="text-[5px] font-black uppercase">Identidad</span></button>
+                        <div className="relative -top-8 flex p-2 bg-slate-900/80 backdrop-blur-2xl rounded-[2rem] border border-white/10 shadow-2xl">
+                            <button onClick={() => setActiveTab('secure')} className={`w-12 h-12 rounded-[1.5rem] flex items-center justify-center transition-all ${activeTab === 'secure' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-slate-800 text-white'}`}><Icon name="shield" color={activeTab === 'secure' ? '#000' : '#fff'} /></button>
+                        </div>
+                        <button onClick={() => setActiveTab('themes')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'themes' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'themes' ? activeTheme.color : 'white'}}><Icon name="brush" className="w-5 h-5" /><span className="text-[5px] font-black uppercase">Temas</span></button>
+                        <button onClick={() => setActiveTab('portal')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'portal' ? 'font-bold' : 'opacity-40'}`} style={{color: activeTab === 'portal' ? activeTheme.color : 'white'}}><Icon name="portal" className="w-5 h-5" /><span className="text-[5px] font-black uppercase">Portal</span></button>
                     </nav>
                 </div>
             );
