@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v2.0.2 Stable Update</title>
+    <title>EDK APP ULTRA Pro - v2.7.1 Fixed</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
@@ -42,6 +42,7 @@
             height: 100vh;
         }
 
+        /* Contenedor Rígido para evitar expansión */
         .app-container { 
             position: relative; 
             width: 100%; 
@@ -51,6 +52,7 @@
             overflow: hidden; 
             display: flex; 
             flex-direction: column; 
+            box-sizing: border-box;
         }
 
         @media (min-width: 640px) { 
@@ -61,7 +63,18 @@
             } 
         }
 
+        /* Scroll Suave y bloqueo de rebote */
+        .main-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+            padding-bottom: 120px; /* Espacio para el nav absoluto */
+        }
+
         .scrollbar-hide::-webkit-scrollbar { display: none; }
+
         .master-card { 
             background: rgba(255, 255, 255, 0.03); 
             border: 1px solid rgba(255, 255, 255, 0.08); 
@@ -71,49 +84,23 @@
             position: relative; 
         }
 
-        .animate-in { animation: slideUp 0.4s ease-out forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-
-        @keyframes ticker {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-220%); }
-        }
-        .ticker-text {
-            display: inline-block;
-            white-space: nowrap;
-            animation: ticker 25s linear infinite;
-        }
-
-        .cloak-screen {
-            background-color: #000;
-            color: #00ff00;
-            font-family: 'JetBrains Mono', monospace;
-            padding: 2rem;
-            height: 100%;
+        .ranking-item {
             display: flex;
-            flex-direction: column;
-            font-size: 12px;
-            overflow: hidden;
-        }
-
-        .tamper-alert {
-            position: fixed;
-            inset: 0;
-            background: rgba(127, 29, 29, 0.98);
-            backdrop-filter: blur(20px);
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 2rem;
-            animation: pulse-red 1s infinite alternate;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1.5rem;
+            margin-bottom: 10px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        @keyframes pulse-red {
-            from { background: rgba(127, 29, 29, 0.95); }
-            to { background: rgba(185, 28, 28, 0.95); }
+        .roblox-verified-icon {
+            width: 18px;
+            height: 18px;
+            margin-left: 6px;
+            flex-shrink: 0;
         }
 
         .liquid-container {
@@ -148,6 +135,44 @@
             transition: transform 0.2s ease-out;
         }
 
+        .camera-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .logo-stamp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            opacity: 0.7;
+            filter: drop-shadow(0 0 10px var(--accent-color));
+            pointer-events: none;
+            animation: flicker-logo 3s infinite;
+        }
+
+        @keyframes flicker-logo {
+            0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        .tamper-alert {
+            position: fixed;
+            inset: 0;
+            background: rgba(127, 29, 29, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
         .progress-ring-circle { 
             stroke: var(--accent-color); 
             stroke-width: 4; 
@@ -157,16 +182,6 @@
             transition: stroke-dashoffset 2s linear; 
         }
         .scanning .progress-ring-circle { stroke-dashoffset: 0; }
-        .electric-laser { 
-            position: absolute; 
-            left: 0; 
-            width: 100%; 
-            height: 4px; 
-            background: var(--accent-color); 
-            box-shadow: 0 0 15px var(--accent-color); 
-            animation: scan-move 2s linear infinite; 
-        }
-        @keyframes scan-move { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
     </style>
 </head>
 <body id="app-body">
@@ -174,31 +189,6 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
-
-        // --- Lógica de Actualización Segura (v2.0.2) ---
-        const initServiceWorker = async () => {
-            if ('serviceWorker' in navigator) {
-                try {
-                    // Usar try-catch para manejar InvalidStateError en previsualizaciones
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (let registration of registrations) {
-                        registration.update().catch(() => {});
-                    }
-                } catch (e) {
-                    // El documento está en un estado que no permite acceder a SW (común en iframes)
-                    console.warn("ServiceWorker Access Restricted");
-                }
-
-                let refreshing = false;
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) {
-                        window.location.reload();
-                        refreshing = true;
-                    }
-                });
-            }
-        };
-        initServiceWorker();
 
         const Icon = ({ name, className = "w-6 h-6", color = "currentColor" }) => {
             const icons = {
@@ -213,16 +203,20 @@
                 unlock: <path d="M7 11V7a5 5 0 0 1 9.9-1M17 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />,
                 user: <React.Fragment><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></React.Fragment>,
                 terminal: <path d="M4 17l6-6-6-6M12 19h8" />,
-                settings: <React.Fragment><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></React.Fragment>
+                camera: <React.Fragment><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></React.Fragment>,
+                trophy: <path d="M6 9V2h12v7M6 18h12m-9 4h6m-3-18v18M1 7h5m12 0h5M1 11c0 3 2 5 5 5m12 0c3 0 5-2 5-5" />,
+                roblox_verified: <React.Fragment>
+                    <path d="M4.332 7.002L13.332 3.002C14.444 2.508 15.753 3.004 16.257 4.11L20.257 13.11C20.761 14.216 20.265 15.525 19.159 16.029L10.159 20.029C9.053 20.533 7.744 20.037 7.24 18.931L3.24 9.931C2.736 8.825 3.232 7.516 4.332 7.002Z" fill="#0084ff" />
+                    <path d="M8.5 12L10.5 14L15.5 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </React.Fragment>
             };
-            return <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
+            return <svg viewBox="0 0 24 24" fill="none" stroke={name === 'roblox_verified' ? 'none' : color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
         };
 
         const App = () => {
             const [activeTab, setActiveTab] = useState('home');
             const [theme, setTheme] = useState(() => localStorage.getItem('edk_ultra_theme') || 'blue');
             const [xp, setXp] = useState(() => parseInt(localStorage.getItem('edk_ultra_xp')) || 0);
-            const [isScanning, setIsScanning] = useState(false);
             const [isUnlocked, setIsUnlocked] = useState(false);
             const [isCloaked, setIsCloaked] = useState(false);
             const [tamperDetected, setTamperDetected] = useState(false);
@@ -231,12 +225,69 @@
             const [passInput, setPassInput] = useState('');
             const [tilt, setTilt] = useState({ x: 0, y: 0 });
             
+            // Fixed state missing
+            const [isScanning, setIsScanning] = useState(false);
+            
+            const videoRef = useRef(null);
+            const [streamActive, setStreamActive] = useState(false);
             const [newsMessage, setNewsMessage] = useState("JOIN MY NEW ROBLOX COMMUNITY EDKSTUDIOS BY MUNEEB_ALY • ");
             const [securityLogs, setSecurityLogs] = useState([]);
-            
             const qrRef = useRef(null);
             const scanTimerRef = useRef(null);
             const [clickCount, setClickCount] = useState(0);
+
+            const topVerified = [
+                { id: 1, name: "Roblox", uid: "1" },
+                { id: 2, name: "Builderman", uid: "16" },
+                { id: 3, name: "David Baszucki", uid: "261" },
+                { id: 4, name: "KreekCraft", uid: "80160494" },
+                { id: 5, name: "Shedletsky", uid: "156" },
+                { id: 6, name: "Nightgaladeld", uid: "2032622" },
+                { id: 7, name: "Flamingo", uid: "4553655" },
+                { id: 8, name: "InceptionTime", uid: "24669864" },
+                { id: 9, name: "Linkmon99", uid: "1480112" },
+                { id: 10, name: "Stickmasterluke", uid: "80816" },
+                { id: 11, name: "DenisDaily", uid: "135831038" },
+                { id: 12, name: "ThinkNoodles", uid: "243956961" },
+                { id: 13, name: "Poke", uid: "20293116" },
+                { id: 14, name: "Tofuu", uid: "219159" },
+                { id: 15, name: "Sketch", uid: "15474597" },
+                { id: 16, name: "GamingWithKev", uid: "44031633" },
+                { id: 17, name: "MeganPlays", uid: "254885822" },
+                { id: 18, name: "LeahAshe", uid: "212555554" },
+                { id: 19, name: "ItsFunneh", uid: "110374115" },
+                { id: 20, name: "Asimo3089", uid: "2470023" },
+                { id: 21, name: "Nikilis", uid: "18451" },
+                { id: 22, name: "Loleris", uid: "137452" },
+                { id: 23, name: "Quenty", uid: "241513" },
+                { id: 24, name: "NewFissy", uid: "12946594" },
+                { id: 25, name: "Badcc", uid: "2404554" },
+                { id: 26, name: "MiniToon", uid: "13614532" },
+                { id: 27, name: "Dued1", uid: "21960" },
+                { id: 28, name: "27kDomin", uid: "172937740" },
+                { id: 29, name: "ElDramaKing_ALT", uid: "4323201413" },
+                { id: 30, name: "haz3mn", uid: "121966023" },
+                { id: 31, name: "muneeb", uid: "33458739" },
+                { id: 32, name: "ferscodev", uid: "104683056" },
+                { id: 33, name: "olix", uid: "44342240" },
+                { id: 34, name: "ProjectSupreme", uid: "66497740" },
+                { id: 35, name: "fan12_yt", uid: "111333444" },
+                { id: 36, name: "Vurse", uid: "154148" },
+                { id: 37, name: "zknx", uid: "44026338" },
+                { id: 38, name: "Bloxtun", uid: "1726058" },
+                { id: 39, name: "Rinpix", uid: "1845451" },
+                { id: 40, name: "Rdite", uid: "194356" },
+                { id: 41, name: "Aurarus", uid: "155451" },
+                { id: 42, name: "iDracius", uid: "565656" },
+                { id: 43, name: "Bobbysayhi", uid: "212121" },
+                { id: 44, name: "SamsonXVI", uid: "22759901" },
+                { id: 45, name: "Firebrand1", uid: "154157" },
+                { id: 46, name: "Zaquille", uid: "101010" },
+                { id: 47, name: "silky_dev", uid: "202020" },
+                { id: 48, name: "Quataun", uid: "147585" },
+                { id: 49, name: "29kDomin", uid: "172937741" },
+                { id: 50, name: "manato48", uid: "33333333" }
+            ];
 
             const themes = {
                 blue: { name: 'Neon', color: '#00d2ff', grad: 'from-blue-600 to-cyan-950' },
@@ -248,44 +299,20 @@
             const activeTheme = themes[theme];
             const level = Math.floor(xp / 100);
 
-            const addSecurityLog = (msg) => {
-                const now = new Date().toLocaleTimeString();
-                setSecurityLogs(prev => [`[${now}] ${msg}`, ...prev].slice(0, 10));
-            };
-
             useEffect(() => {
                 if (isOwner || showLoginModal) return;
-
-                const handleKeyDetection = (e) => {
+                const handleKey = (e) => {
                     if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85)) {
                         setTamperDetected(true);
-                        addSecurityLog("Alarma: Intento de inspección (Teclado)");
                         e.preventDefault();
                     }
                 };
-
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach(mutation => {
-                        if (mutation.type === 'childList') {
-                            const rootRemoved = Array.from(mutation.removedNodes).some(node => node.id === 'root');
-                            if (rootRemoved) {
-                                setTamperDetected(true);
-                                addSecurityLog("Alarma: Estructura Root alterada");
-                            }
-                        }
-                    });
+                const observer = new MutationObserver((m) => {
+                    m.forEach(mut => { if (mut.type === 'childList' && Array.from(mut.removedNodes).some(n => n.id === 'root')) setTamperDetected(true); });
                 });
-
-                window.addEventListener('keydown', handleKeyDetection);
+                window.addEventListener('keydown', handleKey);
                 observer.observe(document.body, { childList: true });
-                const disableContextMenu = (e) => e.preventDefault();
-                document.addEventListener('contextmenu', disableContextMenu);
-
-                return () => {
-                    window.removeEventListener('keydown', handleKeyDetection);
-                    observer.disconnect();
-                    document.removeEventListener('contextmenu', disableContextMenu);
-                };
+                return () => { window.removeEventListener('keydown', handleKey); observer.disconnect(); };
             }, [tamperDetected, isOwner, showLoginModal]);
 
             useEffect(() => {
@@ -295,36 +322,29 @@
             }, [theme, xp]);
 
             useEffect(() => {
-                const handleOrientation = (e) => { if (activeTab === 'singularity') setTilt({ x: e.gamma || 0, y: e.beta || 0 }); };
-                window.addEventListener('deviceorientation', handleOrientation);
-                return () => window.removeEventListener('deviceorientation', handleOrientation);
-            }, [activeTab]);
-
-            useEffect(() => {
-                if (activeTab === 'home' && qrRef.current && !isCloaked && !tamperDetected && !showLoginModal) {
-                    qrRef.current.innerHTML = "";
-                    new QRCode(qrRef.current, { text: window.location.href, width: 160, height: 160 });
+                if (activeTab === 'vision' && !streamActive) {
+                    const startCam = async () => {
+                        try {
+                            const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+                            if (videoRef.current) { videoRef.current.srcObject = s; setStreamActive(true); }
+                        } catch (e) { console.error(e); }
+                    };
+                    startCam();
+                } else if (activeTab !== 'vision' && streamActive) {
+                    if (videoRef.current?.srcObject) { videoRef.current.srcObject.getTracks().forEach(t => t.stop()); setStreamActive(false); }
                 }
-            }, [activeTab, isCloaked, tamperDetected, showLoginModal]);
-
-            const handleOwnerAuth = () => { 
-                if (passInput === '1234') {
-                    setIsOwner(true);
-                    addSecurityLog("Consola: Dueño autenticado");
-                }
-                setShowLoginModal(false); 
-            };
+            }, [activeTab, streamActive]);
 
             if (showLoginModal) {
                 return (
                     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-2xl">
                         <div className="master-card w-full max-w-[320px] text-center space-y-6 border-white/20 animate-in">
                             <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mx-auto text-blue-400"><Icon name="user" className="w-8 h-8" /></div>
-                            <div><h2 className="text-xl font-black uppercase italic tracking-tighter">Identidad Propietario</h2></div>
+                            <div><h2 className="text-xl font-black uppercase italic tracking-tighter">Acceso EDK</h2></div>
                             <input type="password" placeholder="Clave Master..." value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center font-mono text-xl focus:outline-none focus:border-blue-500 text-white" />
                             <div className="flex flex-col gap-2">
-                                <button onClick={handleOwnerAuth} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Autenticar</button>
-                                <button onClick={() => setShowLoginModal(false)} className="w-full text-white/40 py-2 text-[9px] font-bold uppercase tracking-widest">Acceso Usuario</button>
+                                <button onClick={() => { if(passInput === '1234') setIsOwner(true); setShowLoginModal(false); }} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Autenticar</button>
+                                <button onClick={() => setShowLoginModal(false)} className="w-full text-white/40 py-2 text-[9px] font-bold uppercase tracking-widest">Usuario Estándar</button>
                             </div>
                         </div>
                     </div>
@@ -336,66 +356,79 @@
                     <div className="tamper-alert font-black">
                         <div className="bg-white text-red-700 p-6 rounded-full mb-8 shadow-[0_0_50px_rgba(255,255,255,0.5)] animate-bounce"><Icon name="alert" className="w-16 h-16" /></div>
                         <h1 className="text-3xl uppercase italic tracking-tighter mb-4">SECURITY BREACH</h1>
-                        <p className="text-xl uppercase italic leading-none text-white">INTENTO SOSPECHOSO DE CAMBIOS EN EL CÓDIGO</p>
-                        <div className="flex flex-col gap-3 mt-10 w-full max-w-[280px]">
-                            <button onClick={() => window.location.reload()} className="px-10 py-4 bg-white text-red-700 rounded-2xl uppercase text-xs font-black shadow-2xl">Reiniciar Núcleo</button>
-                            <button onClick={() => setTamperDetected(false)} className="px-10 py-3 bg-red-900/40 border border-white/20 text-white/80 rounded-2xl uppercase text-[9px] font-bold">Forzar Desbloqueo</button>
-                        </div>
-                    </div>
-                );
-            }
-
-            if (isCloaked) {
-                return (
-                    <div className="app-container no-select cloak-screen" onClick={() => { setClickCount(c => { if(c+1 === 3) setIsCloaked(false); return (c+1)%3; }); setTimeout(() => setClickCount(0), 500); }}>
-                        <p>> BOOT_ERROR: 0x800F0922</p>
-                        <p>> RECOVERY_STATE: 45%</p>
-                        <p className="mt-8">> Terminating interface...<span className="inline-block w-2 h-4 bg-green-500 animate-pulse ml-1"></span></p>
+                        <p className="text-xl uppercase italic leading-none text-white">INTEGRIDAD COMPROMETIDA</p>
+                        <button onClick={() => setTamperDetected(false)} className="mt-10 px-10 py-3 bg-white text-red-700 rounded-2xl uppercase text-[9px] font-bold shadow-xl">Reiniciar</button>
                     </div>
                 );
             }
 
             return (
                 <div id="app-root-container" className="app-container animate-in no-select">
-                    <header className="h-32 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 pt-8 border-b border-white/5">
-                        <div onClick={() => setXp(p => p + 5)}>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Protocolo v2.0.2 {isOwner ? '• MASTER' : ''}</p>
-                            <h1 className="text-xl font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
+                    <header className="h-24 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 pt-6 border-b border-white/5 flex-shrink-0">
+                        <div>
+                            <p className="text-[8px] font-black uppercase tracking-widest text-white/30">Protocolo v2.7.1 {isOwner ? '• MASTER' : ''}</p>
+                            <h1 className="text-lg font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
                             <img src="edkultra.svg" className="w-full h-full object-cover" alt="Logo" />
                         </div>
                     </header>
 
-                    <div className="bg-slate-900/50 border-b border-white/5 h-8 flex items-center overflow-hidden">
-                        <div className="bg-blue-600 h-full flex items-center px-3 z-10 shadow-[5px_0_15px_rgba(0,0,0,0.5)]"><span className="text-[8px] font-black uppercase tracking-tighter">RED EDK</span></div>
-                        <div className="flex-grow">
-                            <p className="ticker-text text-[9px] font-bold text-white/80 italic">{newsMessage}</p>
-                        </div>
+                    <div className="bg-slate-900/50 border-b border-white/5 h-8 flex items-center overflow-hidden flex-shrink-0">
+                        <div className="bg-blue-600 h-full flex items-center px-3 z-10 shadow-[5px_0_15px_rgba(0,0,0,0.5)]"><span className="text-[7px] font-black uppercase tracking-tighter">RED EDK</span></div>
+                        <div className="flex-grow"><p className="ticker-text text-[9px] font-bold text-white/80 italic">{newsMessage}</p></div>
                     </div>
 
-                    <main className="flex-grow overflow-y-auto scrollbar-hide px-6 pt-4 pb-32">
+                    <main className="main-scroll-area scrollbar-hide px-6 pt-4">
                         {activeTab === 'home' && (
                             <div className="space-y-6 animate-in">
-                                <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[180px] flex flex-col justify-end shadow-2xl`}>
-                                    <h2 className="text-3xl font-black italic uppercase leading-none mb-1">SINGULARITY</h2>
-                                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">{isOwner ? 'Owner Mode: Active' : 'Integridad: Protegida'}</p>
+                                <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[160px] flex flex-col justify-end shadow-2xl`}>
+                                    <h2 className="text-2xl font-black italic uppercase leading-none mb-1">SINGULARITY</h2>
+                                    <p className="text-[9px] font-bold opacity-60 uppercase tracking-widest">Integridad Protegida</p>
                                 </div>
                                 <div className="master-card flex flex-col items-center gap-4 text-center">
-                                    <div className="p-3 bg-white rounded-2xl shadow-xl"><div id="share-qr" ref={qrRef}></div></div>
+                                    <div className="p-3 bg-white rounded-2xl shadow-xl"><div id="share-qr" ref={qrRef} onClick={() => { if(qrRef.current) qrRef.current.innerHTML = ""; new QRCode(qrRef.current, { text: window.location.href, width: 160, height: 160 }); }}></div></div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'ranking' && (
+                            <div className="animate-in space-y-6 h-full">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="trophy" color={activeTheme.color} /> Elite Roblox</h2>
+                                <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.2em]">Ranking Verificados (50)</p>
+                                <div className="flex flex-col">
+                                    {topVerified.map((user, idx) => (
+                                        <div key={user.id} className="ranking-item">
+                                            <div className="relative flex-shrink-0">
+                                                <img 
+                                                    src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.uid}&size=150x150&format=Png&isCircular=true`} 
+                                                    className="w-12 h-12 rounded-full border border-white/10 bg-slate-900"
+                                                    alt={user.name}
+                                                    onError={(e) => { e.target.src = "edkultra.svg"; }}
+                                                />
+                                                <div className="absolute -bottom-1 -right-1 bg-slate-950 border border-white/10 text-[8px] font-bold px-1.5 rounded-full text-white/60">#{idx + 1}</div>
+                                            </div>
+                                            <div className="flex flex-col overflow-hidden">
+                                                <div className="flex items-center">
+                                                    <span className="text-sm font-bold tracking-tight truncate max-w-[150px]">{user.name}</span>
+                                                    <div className="roblox-verified-icon"><Icon name="roblox_verified" className="w-full h-full" /></div>
+                                                </div>
+                                                <span className="text-[8px] font-mono opacity-30 uppercase tracking-widest">ID: {user.uid}</span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
 
                         {activeTab === 'singularity' && (
-                            <div className="animate-in space-y-6">
+                            <div className="animate-in space-y-6 text-center">
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="cpu" color={activeTheme.color} /> Cristal Líquido</h2>
                                 <div className="liquid-container">
                                     <div className="liquid-base" style={{ transform: `translate(${tilt.x * 2}px, ${tilt.y * 2}px)` }}></div>
                                     <div className="liquid-blob" style={{ transform: `translate(${tilt.x * 5}px, ${tilt.y * 5}px)` }}></div>
                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                         <div className="master-card border-white/5 bg-white/5 backdrop-blur-md p-6 text-center shadow-2xl" style={{ transform: `translate(${tilt.x * -1}px, ${tilt.y * -1}px)` }}>
-                                            <p className="text-[8px] font-black opacity-30 mb-2 uppercase">Core Data</p>
                                             <h3 className="text-2xl font-extrabold italic uppercase tracking-tighter">FLUID INTERFACE</h3>
                                         </div>
                                     </div>
@@ -403,126 +436,76 @@
                             </div>
                         )}
 
-                        {activeTab === 'secure' && (
+                        {activeTab === 'vision' && (
                             <div className="animate-in space-y-6 h-full flex flex-col">
-                                <div className="flex justify-between items-center">
-                                    <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="shield" color={activeTheme.color} /> Seguridad</h2>
-                                    <button onClick={() => setIsCloaked(true)} className="bg-white/5 border border-white/10 p-3 rounded-xl active:scale-90"><Icon name="eye" className="w-5 h-5 text-gray-400" /></button>
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="camera" color={activeTheme.color} /> Visión EDK</h2>
+                                <div className="master-card p-0 overflow-hidden relative min-h-[400px] border border-white/10">
+                                    <video ref={videoRef} autoPlay playsInline className="camera-feed h-full w-full"></video>
+                                    <img src="edkultra.svg" className="logo-stamp" alt="Stamp" />
                                 </div>
-                                <div className="master-card flex-grow flex flex-col items-center justify-center min-h-[400px]">
+                            </div>
+                        )}
+
+                        {activeTab === 'secure' && (
+                            <div className="animate-in space-y-6">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="shield" color={activeTheme.color} /> Seguridad</h2>
+                                <div className="master-card flex-grow flex flex-col items-center justify-center min-h-[300px]">
                                     {!isUnlocked ? (
-                                        <div className="text-center space-y-12">
+                                        <div className="text-center space-y-10">
                                             <div 
-                                                className={`relative w-44 h-44 mx-auto rounded-[3.5rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer transition-all ${isScanning ? 'scale-105 shadow-[0_0_30px_rgba(0,242,255,0.2)]' : 'active:scale-95'}`}
-                                                onMouseDown={(e) => { e.preventDefault(); setIsScanning(true); scanTimerRef.current = setTimeout(() => { setIsScanning(false); setIsUnlocked(true); setXp(p => p + 30); }, 2000); }} 
-                                                onTouchStart={(e) => { e.preventDefault(); setIsScanning(true); scanTimerRef.current = setTimeout(() => { setIsScanning(false); setIsUnlocked(true); setXp(p => p + 30); }, 2000); }} 
+                                                className={`relative w-40 h-40 mx-auto rounded-[3.5rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer transition-all ${isScanning ? 'scale-105 shadow-[0_0_30px_rgba(0,242,255,0.2)]' : 'active:scale-95'}`}
+                                                onMouseDown={(e) => { e.preventDefault(); setIsScanning(true); scanTimerRef.current = setTimeout(() => { setIsUnlocked(true); setIsScanning(false); }, 2000); }} 
+                                                onTouchStart={(e) => { e.preventDefault(); setIsScanning(true); scanTimerRef.current = setTimeout(() => { setIsUnlocked(true); setIsScanning(false); }, 2000); }} 
                                                 onMouseUp={() => { if(scanTimerRef.current) clearTimeout(scanTimerRef.current); setIsScanning(false); }}
                                                 onTouchEnd={() => { if(scanTimerRef.current) clearTimeout(scanTimerRef.current); setIsScanning(false); }}
                                             >
-                                                {isScanning && <div className="electric-laser" />}
-                                                <svg className={`progress-ring absolute inset-0 w-full h-full ${isScanning ? 'scanning' : ''}`}><circle className="progress-ring-circle" r="90" cx="88" cy="88" /></svg>
-                                                <Icon name="fingerprint" className={`w-24 h-24 transition-all duration-500 ${isScanning ? 'text-cyan-400' : 'opacity-20'}`} />
+                                                <svg className={`progress-ring absolute inset-0 w-full h-full ${isScanning ? 'scanning' : ''}`}><circle className="progress-ring-circle" r="80" cx="80" cy="80" /></svg>
+                                                <Icon name="fingerprint" className={`w-20 h-20 transition-all ${isScanning ? 'text-cyan-400 opacity-100' : 'opacity-20'}`} />
                                             </div>
                                             <h3 className="text-sm font-black uppercase italic tracking-widest">{isScanning ? 'Validando...' : 'Mantener Huella'}</h3>
                                         </div>
                                     ) : (
-                                        <div className="text-center space-y-8 animate-in">
-                                            <div className="w-16 h-16 bg-cyan-500/20 border border-cyan-500/40 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 shadow-xl"><Icon name="lock" className="w-8 h-8" /></div>
-                                            <h3 className="text-2xl font-black italic uppercase">Bóveda Abierta</h3>
-                                            <button onClick={() => setIsUnlocked(false)} className="py-4 px-8 bg-white text-black rounded-2xl font-black text-[10px] uppercase w-full shadow-2xl">Bloquear</button>
-                                        </div>
+                                        <button onClick={() => setIsUnlocked(false)} className="py-4 px-8 bg-white text-black rounded-2xl font-black text-[10px] uppercase w-full shadow-2xl">Cerrar Bóveda</button>
                                     )}
                                 </div>
                             </div>
                         )}
 
                         {activeTab === 'identity' && (
-                            <div className="space-y-6 animate-in">
+                            <div className="space-y-6">
                                 <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" color={activeTheme.color} /> Perfil</h2>
-                                <div className={`master-card bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 min-h-[220px] shadow-2xl`}>
-                                    <div className="flex justify-between items-start mb-10">
-                                        <div><p className="text-[9px] font-black uppercase opacity-60">ULTRA Identity v2.0.2</p><p className="text-[11px] font-bold tracking-[0.3em]">{isOwner ? 'EDK MASTER OWNER' : level >= 10 ? 'AGENTE ÉLITE' : 'RECLUTA EDK'}</p></div>
-                                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/20 p-1.5 backdrop-blur-md border border-white/20">
-                                            <img src="edkultra.svg" alt="User" className="w-full h-full object-cover rounded-lg" />
-                                        </div>
-                                    </div>
-                                    <h3 className="text-3xl font-black italic uppercase tracking-tighter">{isOwner ? 'MUNEEB_ALY' : 'ULTRA MASTER'}</h3>
-                                    <div className="flex justify-between items-end mt-6">
-                                        <div className="text-left"><p className="text-[7px] font-black uppercase opacity-50">Sync</p><p className="text-xs font-mono font-bold">{xp} XP</p></div>
-                                        <div className="text-right"><p className="text-[7px] font-black uppercase opacity-50">Nivel</p><p className="text-xl font-black italic">LVL {level}</p></div>
-                                    </div>
+                                <div className="master-card bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 min-h-[180px] shadow-2xl flex flex-col justify-end">
+                                    <h3 className="text-2xl font-black italic uppercase tracking-tighter">{isOwner ? 'MUNEEB_ALY' : 'ULTRA MASTER'}</h3>
+                                    <p className="text-[9px] font-bold opacity-60 uppercase tracking-widest mt-1">{isOwner ? 'EDK MASTER OWNER' : 'RECLUTA EDK'}</p>
                                 </div>
-                                <button onClick={() => setXp(p => p + 150)} className="master-card p-6 w-full font-black text-[10px] uppercase bg-white/5 border-white/10 text-center">Subir Nivel</button>
                             </div>
                         )}
 
                         {activeTab === 'admin' && isOwner && (
-                            <div className="space-y-6 animate-in">
-                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="terminal" color={activeTheme.color} /> Consola Admin</h2>
-                                
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="terminal" color={activeTheme.color} /> Admin</h2>
                                 <div className="master-card space-y-4">
-                                    <p className="text-[10px] font-black uppercase opacity-50">Editor de Noticias Global</p>
-                                    <input 
-                                        type="text" 
-                                        value={newsMessage}
-                                        onChange={(e) => setNewsMessage(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-mono text-xs focus:outline-none focus:border-blue-500 text-white"
-                                        placeholder="Escribe el nuevo mensaje..."
-                                    />
-                                    <button onClick={() => addSecurityLog("Noticias actualizadas")} className="w-full py-2 bg-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest">Emitir</button>
-                                </div>
-
-                                <div className="master-card bg-black/40 border-blue-500/20">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <p className="text-[10px] font-black uppercase opacity-50">Log de Eventos</p>
-                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                    </div>
-                                    <div className="font-mono text-[9px] space-y-2 h-40 overflow-y-auto scrollbar-hide text-green-500/80">
-                                        {securityLogs.length > 0 ? securityLogs.map((log, i) => (
-                                            <div key={i} className="border-l border-green-500/30 pl-2">{log}</div>
-                                        )) : (
-                                            <div className="opacity-30">Escuchando red...</div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button onClick={() => { setXp(0); addSecurityLog("Reset de XP ejecutado"); }} className="master-card p-4 text-[8px] font-black uppercase border-red-500/20 text-red-400">Wipe XP</button>
-                                    <button onClick={() => { window.location.reload(true); }} className="master-card p-4 text-[8px] font-black uppercase border-blue-500/20 text-blue-400">Hard Update</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'themes' && (
-                            <div className="space-y-6 animate-in">
-                                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="brush" color={activeTheme.color} /> Temas</h2>
-                                <div className="master-card grid grid-cols-2 gap-4 justify-items-center shadow-xl">
-                                    {Object.entries(themes).map(([id, t]) => (
-                                        <div key={id} onClick={() => setTheme(id)} className="flex flex-col items-center gap-3 cursor-pointer group">
-                                            <div className={`w-14 h-14 rounded-[20px] border-4 transition-all ${theme === id ? 'border-white scale-110 shadow-2xl' : 'border-transparent opacity-40'}`} style={{ backgroundColor: t.color }}></div>
-                                            <span className={`text-[8px] font-black uppercase tracking-widest ${theme === id ? 'text-white' : 'text-slate-500'}`}>{t.name}</span>
-                                        </div>
-                                    ))}
+                                    <p className="text-[10px] font-black uppercase opacity-50">Noticias Globales</p>
+                                    <input type="text" value={newsMessage} onChange={(e) => setNewsMessage(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-mono text-xs focus:outline-none text-white shadow-inner" />
                                 </div>
                             </div>
                         )}
                     </main>
 
-                    <nav className="absolute bottom-0 w-full h-24 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 flex justify-around items-center px-2 z-[100] safe-bottom">
+                    <nav className="absolute bottom-0 w-full h-24 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 flex justify-around items-center px-1 z-[100] safe-bottom flex-shrink-0">
                         <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'home' ? '' : 'opacity-40'}`} style={{color: activeTab === 'home' ? activeTheme.color : 'white'}}><Icon name="home" className="w-4 h-4" /><span className="text-[5px] font-black uppercase">Home</span></button>
+                        <button onClick={() => setActiveTab('ranking')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'ranking' ? '' : 'opacity-40'}`} style={{color: activeTab === 'ranking' ? activeTheme.color : 'white'}}><Icon name="trophy" className="w-4 h-4" /><span className="text-[5px] font-black uppercase">Elite</span></button>
+                        
+                        <div className="relative -top-6 flex p-1.5 bg-slate-900/80 backdrop-blur-2xl rounded-[1.8rem] border border-white/10 shadow-2xl">
+                            {isOwner ? (
+                                <button onClick={() => setActiveTab('admin')} className={`w-11 h-11 rounded-[1.4rem] flex items-center justify-center transition-all ${activeTab === 'admin' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-blue-600 text-white'}`}><Icon name="terminal" color={activeTab === 'admin' ? '#000' : '#fff'} /></button>
+                            ) : (
+                                <button onClick={() => setActiveTab('secure')} className={`w-11 h-11 rounded-[1.4rem] flex items-center justify-center transition-all ${activeTab === 'secure' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-slate-800 text-white'}`}><Icon name="shield" color={activeTab === 'secure' ? '#000' : '#fff'} /></button>
+                            )}
+                        </div>
+
                         <button onClick={() => setActiveTab('singularity')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'singularity' ? '' : 'opacity-40'}`} style={{color: activeTab === 'singularity' ? activeTheme.color : 'white'}}><Icon name="cpu" className="w-4 h-4" /><span className="text-[5px] font-black uppercase">Liquid</span></button>
-                        
-                        {isOwner ? (
-                            <div className="relative -top-8 flex p-2 bg-blue-600/20 backdrop-blur-2xl rounded-[1.8rem] border border-blue-500/30 shadow-[0_0_20px_rgba(37,99,235,0.3)]">
-                                <button onClick={() => setActiveTab('admin')} className={`w-12 h-12 rounded-[1.4rem] flex items-center justify-center transition-all ${activeTab === 'admin' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-blue-600 text-white'}`}><Icon name="terminal" color={activeTab === 'admin' ? '#000' : '#fff'} /></button>
-                            </div>
-                        ) : (
-                            <div className="relative -top-8 flex p-2 bg-slate-900/80 backdrop-blur-2xl rounded-[1.8rem] border border-white/10 shadow-2xl">
-                                <button onClick={() => setActiveTab('secure')} className={`w-12 h-12 rounded-[1.4rem] flex items-center justify-center transition-all ${activeTab === 'secure' ? 'bg-white text-black scale-110 shadow-[0_0_20px_white]' : 'bg-slate-800 text-white'}`}><Icon name="shield" color={activeTab === 'secure' ? '#000' : '#fff'} /></button>
-                            </div>
-                        )}
-                        
-                        <button onClick={() => setActiveTab('themes')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'themes' ? '' : 'opacity-40'}`} style={{color: activeTab === 'themes' ? activeTheme.color : 'white'}}><Icon name="brush" className="w-4 h-4" /><span className="text-[5px] font-black uppercase">Temas</span></button>
+                        <button onClick={() => setActiveTab('vision')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'vision' ? '' : 'opacity-40'}`} style={{color: activeTab === 'vision' ? activeTheme.color : 'white'}}><Icon name="camera" className="w-4 h-4" /><span className="text-[5px] font-black uppercase">Vision</span></button>
                         <button onClick={() => setActiveTab('identity')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'identity' ? '' : 'opacity-40'}`} style={{color: activeTab === 'identity' ? activeTheme.color : 'white'}}><Icon name="id" className="w-4 h-4" /><span className="text-[5px] font-black uppercase">Perfil</span></button>
                     </nav>
                 </div>
