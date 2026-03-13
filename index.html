@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v6.2 Sentinel Core Fix</title>
+    <title>EDK APP ULTRA Pro - v6.4 Sentinel Core Fixed</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
@@ -240,14 +240,15 @@
             const [flashlightColor, setFlashlightColor] = useState('#ffffff');
             const [activeFilter, setActiveFilter] = useState('none');
             const [cardMaterial, setCardMaterial] = useState('metal');
-            
+            const [currentTime, setCurrentTime] = useState(new Date());
+
             const audioCtx = useRef(null);
             const videoRef = useRef(null);
             const qrRef = useRef(null);
 
-            // --- MOTOR DE SONIDO TÁCTICO ---
             const playTacticalSound = (freq = 200, duration = 0.1) => {
                 if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.current.state === 'suspended') audioCtx.current.resume();
                 const osc = audioCtx.current.createOscillator();
                 const gain = audioCtx.current.createGain();
                 osc.type = 'square';
@@ -258,7 +259,24 @@
                 osc.start(); osc.stop(audioCtx.current.currentTime + duration);
             };
 
-            // --- SENTINEL & KINETIC & ORIENTATION ---
+            const togglePhysicalTorch = async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    const track = stream.getVideoTracks()[0];
+                    const caps = track.getCapabilities();
+                    if (caps.torch) {
+                        await track.applyConstraints({ advanced: [{ torch: !torchOn }] });
+                        setTorchOn(!torchOn);
+                        playTacticalSound(800, 0.1);
+                    } else { alert("Hardware de linterna no detectado."); }
+                } catch (e) { console.error(e); }
+            };
+
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
             useEffect(() => {
                 const handleOrientation = (e) => {
                     const angle = (e.gamma || 0) + (e.beta || 0) + 135;
@@ -306,6 +324,18 @@
                 }
             }, [activeTab, showLoginModal, isLockedScreen]);
 
+            const formatTime = () => {
+                const h = currentTime.getHours().toString().padStart(2, '0');
+                const m = currentTime.getMinutes().toString().padStart(2, '0');
+                return `${h}:${m}`;
+            };
+
+            const formatDate = () => {
+                const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                return `${days[currentTime.getDay()]}, ${currentTime.getDate()} de ${months[currentTime.getMonth()]}`;
+            };
+
             const handleTabChange = (tab) => {
                 if (tab === activeTab) return;
                 playTacticalSound(150, 0.05);
@@ -313,22 +343,6 @@
                 setIsPulseActive(true);
                 setTimeout(() => { setActiveTab(tab); setIsBreaching(false); }, 300);
                 setTimeout(() => setIsPulseActive(false), 700);
-            };
-
-            const toggleLock = () => {
-                setIsLockedScreen(!isLockedScreen);
-                playTacticalSound(300, 0.2);
-            };
-
-            const togglePhysicalTorch = async () => {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    const track = stream.getVideoTracks()[0];
-                    if (track.getCapabilities().torch) {
-                        await track.applyConstraints({ advanced: [{ torch: !torchOn }] });
-                        setTorchOn(!torchOn);
-                    } else { alert("Hardware no detectado."); }
-                } catch (e) { console.error(e); }
             };
 
             const topVerified = [
@@ -372,12 +386,12 @@
 
             return (
                 <div className={`app-container animate-in no-select ${isPulseActive ? 'border-pulse-active' : ''}`}>
-                    <div className="laser-engraving-label">{engravedName} // TACTICAL-OS-V6.2</div>
+                    <div className="laser-engraving-label">{engravedName} // CHRONOS-FIX-V6.2</div>
 
                     {isLockedScreen && (
-                        <div className="lock-screen-overlay" onClick={toggleLock}>
-                            <h2 className="text-5xl font-black italic tracking-tighter mb-2">09:04</h2>
-                            <p className="text-[10px] font-bold uppercase opacity-40 mb-12">Viernes, 13 de Marzo</p>
+                        <div className="lock-screen-overlay" onClick={() => { setIsLockedScreen(false); playTacticalSound(300, 0.2); }}>
+                            <h2 className="text-5xl font-black italic tracking-tighter mb-2">{formatTime()}</h2>
+                            <p className="text-[10px] font-bold uppercase opacity-40 mb-12">{formatDate()}</p>
                             <div className="lock-notif">
                                 <p className="text-[8px] font-black text-blue-400 uppercase">Sentinel Push</p>
                                 <p className="text-xs font-bold mt-1">Terminal blindado. Toca para continuar.</p>
@@ -390,9 +404,9 @@
                     )}
 
                     <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5 flex-shrink-0">
-                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Precise 6.3" Frame</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
+                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Precise 6.3" Global Frame</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
                         <div className="flex items-center gap-3">
-                            <button onClick={toggleLock} className="opacity-30 active:scale-95"><Icon name="lock" className="w-4 h-4" /></button>
+                            <button onClick={() => { setIsLockedScreen(true); playTacticalSound(300, 0.2); }} className="opacity-30 active:scale-95"><Icon name="lock" className="w-4 h-4" /></button>
                             <img src="edkultra.svg" className="w-8 h-8 rounded-lg shadow-xl" style={{ filter: `drop-shadow(0 0 10px ${dynamicColor})` }} alt="Logo" />
                         </div>
                     </header>
@@ -408,7 +422,8 @@
                                 {activeTab === 'home' && (
                                     <div className="module-scroll-area flex flex-col justify-center items-center space-y-8 text-center animate-in">
                                         <div className="bg-gradient-to-br from-slate-900 to-black p-8 rounded-3xl border border-white/5 shadow-xl w-full">
-                                            <h2 className="text-2xl font-black italic uppercase leading-tight">OS <br/> <span style={{ color: dynamicColor }}>ESTABLE</span></h2>
+                                            <h2 className="text-2xl font-black italic uppercase leading-tight">OS <br/> <span style={{ color: dynamicColor }}>ACTIVO</span></h2>
+                                            <p className="text-[9px] opacity-40 uppercase font-mono mt-2">{formatTime()} // {formatDate()}</p>
                                         </div>
                                         <div className="p-2 bg-white rounded-xl shadow-xl"><div id="share-qr" ref={qrRef}></div></div>
                                     </div>
@@ -421,13 +436,12 @@
                                                 <Icon name="cpu" className="w-12 h-12 mb-4 text-white/40 animate-pulse" />
                                                 <h3 className="text-sm font-black uppercase italic mb-2">Protocolo Kinético</h3>
                                                 <p className="text-[8px] opacity-40 uppercase font-black text-center">Agita para abrir la bóveda táctica</p>
-                                                <button onClick={() => setIsVaultUnlocked(true)} className="mt-8 text-[6px] opacity-10">Bypass</button>
                                             </div>
                                         ) : (
-                                            <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 text-center">
+                                            <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 text-center animate-in">
                                                 <Icon name="roblox_verified" className="w-16 h-16" color="#f9d423" />
                                                 <h3 className="text-lg font-black italic uppercase">Bóveda Abierta</h3>
-                                                <button className="py-4 px-10 bg-yellow-500 text-black rounded-xl font-black text-[9px] uppercase shadow-xl" onClick={() => playTacticalSound(1000, 0.2)}>Reclamar</button>
+                                                <button className="py-4 px-10 bg-yellow-500 text-black rounded-xl font-black text-[9px] uppercase shadow-xl active:scale-95 transition-transform" onClick={() => playTacticalSound(1000, 0.2)}>Reclamar Verificado</button>
                                                 <button onClick={() => setIsVaultUnlocked(false)} className="text-[7px] opacity-30 font-bold uppercase">Cerrar</button>
                                             </div>
                                         )}
@@ -457,9 +471,8 @@
                                 )}
 
                                 {activeTab === 'notifs' && (
-                                    <div className="module-scroll-area space-y-4 animate-in">
-                                        <div className="notif-card"><span className="text-[8px] font-black text-blue-400">UNIFORM WIDTH</span><p className="text-[10px] opacity-60 mt-1">Todas las secciones comparten el ancho de Notificaciones.</p></div>
-                                        <div className="notif-card"><span className="text-[8px] font-black text-green-400">SENTINEL FIX</span><p className="text-[10px] opacity-60 mt-1">Variables de estado restauradas correctamente.</p></div>
+                                    <div className="module-scroll-area space-y-4 animate-in text-center flex flex-col justify-center">
+                                        <div className="notif-card"><span className="text-[8px] font-black text-blue-400 uppercase">Status Core</span><p className="text-[10px] opacity-60 mt-1">Sincronización de reloj y linterna completada.</p></div>
                                     </div>
                                 )}
 
@@ -489,10 +502,9 @@
                                         <div className="w-20 h-20 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/30 mb-4">
                                             <Icon name="shield" className="w-10 h-10" color={dynamicColor} />
                                         </div>
-                                        <h3 className="text-sm font-black uppercase italic">Estado Anti-Edición</h3>
+                                        <h3 className="text-sm font-black uppercase italic">Seguridad Sentinel</h3>
                                         <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
-                                            <p className="text-[10px] font-bold text-green-400 uppercase">Kernel Blindado</p>
-                                            <p className="text-[10px] font-bold text-green-400 uppercase">Sentinel OS 2.0</p>
+                                            <p className="text-[10px] font-bold text-green-400 uppercase">Blindaje Activo</p>
                                         </div>
                                     </div>
                                 )}
@@ -500,7 +512,7 @@
                                 {activeTab === 'info' && (
                                     <div className="module-scroll-area flex flex-col justify-center space-y-4">
                                         <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-[9px] opacity-40 uppercase">Diagonal</span><span className="text-[9px] font-mono">6.3"</span></div>
-                                        <div className="flex justify-between pb-2"><span className="text-[9px] opacity-40 uppercase">Kernel</span><span className="text-[9px] font-mono">v6.2</span></div>
+                                        <div className="flex justify-between pb-2"><span className="text-[9px] opacity-40 uppercase">Kernel</span><span className="text-[9px] font-mono">v6.4</span></div>
                                     </div>
                                 )}
                             </div>
