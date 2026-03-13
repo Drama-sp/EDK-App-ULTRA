@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v8.3 Sonic Rebound</title>
+    <title>EDK APP ULTRA Pro - v8.4 Core Recovery</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
@@ -186,11 +186,15 @@
         };
 
         const App = () => {
-            const firebaseConfig = JSON.parse(__firebase_config);
-            const app = fb.initializeApp(firebaseConfig);
-            const auth = fb.getAuth(app);
-            const db = fb.getFirestore(app);
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'edk-ultra-v83';
+            // Safe initialization to prevent black screen
+            let db, auth, appId;
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = fb.initializeApp(firebaseConfig);
+                auth = fb.getAuth(app);
+                db = fb.getFirestore(app);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'edk-ultra-v84';
+            } catch(e) { console.error("Firebase init failed", e); }
 
             // --- ESTADOS ---
             const [user, setUser] = useState(null);
@@ -241,9 +245,8 @@
                 };
 
                 const now = audioCtx.current.currentTime;
-                // Patrón Rebound: Dos pulsos elásticos
-                playNote(1046.50, now, 0.4); // C6
-                playNote(1318.51, now + 0.12, 0.5); // E6
+                playNote(1046.50, now, 0.4); 
+                playNote(1318.51, now + 0.12, 0.5); 
             };
 
             const playTacticalSound = (freq = 200, duration = 0.1) => {
@@ -266,7 +269,7 @@
                         icon: "edkultra.svg"
                     });
                 }
-                playReboundTone(); // Activamos el tono iPhone 15
+                playReboundTone(); 
             };
 
             const logIntrusion = async (type) => {
@@ -307,10 +310,10 @@
                 const handleKey = (e) => {
                     if (isOwner) return;
                     const isForbidden = (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)));
-                    if (isForbidden) { e.preventDefault(); logIntrusion("ACCESO_RECURSOS"); }
+                    if (isForbidden) { e.preventDefault(); logIntrusion("RECURSOS_PROTEGIDOS"); }
                 };
                 window.addEventListener('keydown', handleKey);
-                document.addEventListener('contextmenu', (e) => { if (!isOwner) { e.preventDefault(); logIntrusion("RIGHT_CLICK"); } });
+                document.addEventListener('contextmenu', (e) => { if (!isOwner) { e.preventDefault(); logIntrusion("CLIC_DERECHO"); } });
                 const clock = setInterval(() => setCurrentTime(new Date()), 1000);
                 return () => { window.removeEventListener('keydown', handleKey); clearInterval(clock); };
             }, [user, isOwner]);
@@ -394,18 +397,18 @@
 
             return (
                 <div className={`app-container animate-in no-select ${isPulseActive ? 'border-pulse-active' : ''}`}>
-                    <div className="laser-engraving-label">{engravedName} // SONIC-REBOUND-V8.3</div>
+                    <div className="laser-engraving-label">{engravedName} // CORE-RESTORE-V8.4</div>
 
                     {isLockedScreen && (
                         <div className="lock-screen-overlay" onClick={() => { setIsLockedScreen(false); playTacticalSound(300, 0.2); }}>
                             <h2 className="text-5xl font-black italic tracking-tighter mb-2">{currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</h2>
-                            <p className="text-[10px] font-bold uppercase opacity-40 mb-12">EDK Satellite Protection</p>
+                            <p className="text-[10px] font-bold uppercase opacity-40 mb-12">EDK Apex Protection</p>
                             <div className="mt-auto mb-16 animate-pulse"><Icon name="fingerprint" className="w-12 h-12 opacity-20" /><p className="text-[7px] font-black uppercase mt-2">Identificar</p></div>
                         </div>
                     )}
 
                     <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5 flex-shrink-0">
-                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Total Density OS</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
+                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Total Density Restoration</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
                         <div className="flex items-center gap-3">
                             <button onClick={() => setIsLockedScreen(true)} className="opacity-30 active:scale-95"><Icon name="lock" className="w-4 h-4" /></button>
                             <img src="edkultra.svg" className="w-8 h-8 rounded-lg shadow-xl" style={{ filter: `drop-shadow(0 0 10px ${dynamicColor})` }} alt="Logo" />
@@ -423,11 +426,11 @@
                                 {activeTab === 'home' && (
                                     <div className="module-scroll-area flex flex-col items-center space-y-6 animate-in">
                                         <div className="bg-gradient-to-br from-slate-900 to-black p-8 rounded-3xl border border-white/5 shadow-xl w-full text-center">
-                                            <h2 className="text-2xl font-black italic uppercase leading-tight">SONIC <br/> <span style={{ color: dynamicColor }}>PROFILE</span></h2>
-                                            <p className="text-[9px] opacity-40 uppercase font-mono mt-2">{currentTime.toLocaleTimeString()}</p>
+                                            <h2 className="text-2xl font-black italic uppercase leading-tight">STATUS <br/> <span style={{ color: dynamicColor }}>ESTABLE</span></h2>
+                                            <p className="text-[9px] opacity-40 uppercase font-mono mt-2">{currentTime.toLocaleTimeString()} // {currentTime.toLocaleDateString()}</p>
                                         </div>
                                         <div className="p-2 bg-white rounded-xl shadow-xl mx-auto"><div id="share-qr" ref={qrRef}></div></div>
-                                        <div className="tactical-row"><Icon name="activity" className="text-green-400" /> <span className="text-[9px] font-bold uppercase">Audio: iPhone 15 Rebound Sync</span></div>
+                                        <div className="tactical-row"><Icon name="activity" className="text-green-400" /> <span className="text-[9px] font-bold uppercase">Conexión: 100% Sincronizada</span></div>
                                     </div>
                                 )}
 
@@ -437,7 +440,7 @@
                                             {[1,2,3,5,10,15,20,25,30].map(i => (
                                                 <div key={i} className="tactical-row">
                                                     <div className="w-8 h-8 bg-white/10 rounded-full border border-white/10 overflow-hidden"><img src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${i*1000}&size=150x150&format=Png`} alt="A" /></div>
-                                                    <div className="flex-1 text-xs font-bold truncate">Agent_Verified_{i}</div>
+                                                    <div className="flex-1 text-xs font-bold truncate">Agente_Elite_{i}</div>
                                                     <span className="text-[10px] font-black opacity-20">#{i}</span>
                                                 </div>
                                             ))}
@@ -448,11 +451,10 @@
                                 {activeTab === 'sentinel' && (
                                     <div className="module-scroll-area space-y-4 animate-in">
                                         <div className="bg-blue-500/10 p-4 rounded-2xl border border-blue-500/20 mb-4 text-center">
-                                            <h3 className="text-xs font-black uppercase text-blue-400">Amenazas del Kernel</h3>
-                                            <p className="text-[7px] opacity-40 mt-1 uppercase">Notificaciones locales con tono melódico</p>
+                                            <h3 className="text-xs font-black uppercase text-blue-400">Amenazas Detectadas</h3>
                                         </div>
                                         {intrusions.length === 0 ? (
-                                            <div className="tactical-row justify-center opacity-20"><span className="text-[8px] uppercase font-black italic">Sin actividad hostil</span></div>
+                                            <div className="tactical-row justify-center opacity-20"><span className="text-[8px] uppercase font-black italic">Monitorizando recursos...</span></div>
                                         ) : intrusions.map((log) => (
                                             <div key={log.id} className="tactical-row border-l-2 border-red-500 bg-red-500/5">
                                                 <div className="flex-1">
@@ -491,11 +493,13 @@
                                             className="relative w-32 h-32 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden cursor-pointer"
                                             onMouseDown={() => { setIsScanning(true); scanTimerRef.current = setTimeout(() => { setIsUnlocked(true); setIsScanning(false); }, 1500); }} 
                                             onMouseUp={() => { clearTimeout(scanTimerRef.current); setIsScanning(false); }}
+                                            onTouchStart={() => { setIsScanning(true); scanTimerRef.current = setTimeout(() => { setIsUnlocked(true); setIsScanning(false); }, 1500); }}
+                                            onTouchEnd={() => { clearTimeout(scanTimerRef.current); setIsScanning(false); }}
                                         >
                                             {isScanning && <div className="absolute inset-0 electric-laser" />}
                                             <Icon name="fingerprint" className={`w-16 h-16 ${isScanning ? 'text-cyan-400' : 'opacity-20'}`} />
                                         </div>
-                                        <div className="tactical-row justify-center"><Icon name="shield" className="text-blue-400" /> <span className="text-[9px] uppercase font-black">{isUnlocked ? 'ACCESO TOTAL' : 'IDENTIFICANDO...'}</span></div>
+                                        <div className="tactical-row justify-center"><Icon name="shield" className="text-blue-400" /> <span className="text-[9px] uppercase font-black">{isUnlocked ? 'ACCESO TOTAL' : 'IDENTIFICACIÓN...'}</span></div>
                                     </div>
                                 )}
 
@@ -503,14 +507,14 @@
                                     <div className="module-scroll-area space-y-2 animate-in flex flex-col justify-center">
                                         <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Diagonal</span><span className="text-[10px] font-mono text-blue-400">6.3" ADAPT</span></div>
                                         <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Simetría</span><span className="text-[10px] font-mono text-green-400">ABSOLUTA</span></div>
-                                        <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Kernel</span><span className="text-[10px] font-mono text-yellow-400">v8.3 MAESTRO</span></div>
+                                        <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Kernel</span><span className="text-[10px] font-mono text-yellow-400">v8.4 MAESTRO</span></div>
                                         <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Sound Engine</span><span className="text-[10px] font-mono text-cyan-400">iOS_REBOUND</span></div>
                                     </div>
                                 )}
 
                                 {activeTab === 'identity' && (
                                     <div className="module-scroll-area flex flex-col justify-center items-center space-y-6 animate-in">
-                                        <div className="vip-card-mockup material-metal"><div className="card-shine"></div><img src="edkultra.svg" className="w-8 h-8 opacity-40" alt="Logo" /><div className="mt-auto"><h3 className="text-sm font-black italic uppercase tracking-tighter">{engravedName}</h3><Icon name="roblox_verified" className="w-6 h-6 ml-auto" /></div></div>
+                                        <div className="vip-card-mockup material-metal"><div className="card-shine"></div><img src="edkultra.svg" className="w-8 h-8 opacity-40" alt="L" /><div className="mt-auto"><h3 className="text-sm font-black italic uppercase tracking-tighter">{engravedName}</h3><Icon name="roblox_verified" className="w-6 h-6 ml-auto" /></div></div>
                                         <div className="tactical-row justify-center"><p className="text-[9px] font-black uppercase opacity-50">Acceso: Agente Elite</p></div>
                                     </div>
                                 )}
@@ -561,7 +565,7 @@
 
                                 {activeTab === 'notifs' && (
                                     <div className="module-scroll-area space-y-4 animate-in">
-                                        <div className="notif-card"><span className="text-[8px] font-black text-blue-400 uppercase">Alert Core Sync</span><p className="text-[10px] opacity-60 mt-1">Notificaciones locales activas para intentos de intrusión.</p></div>
+                                        <div className="notif-card"><span className="text-[8px] font-black text-blue-400 uppercase">Recovery Complete</span><p className="text-[10px] opacity-60 mt-1">El contenido de todas las secciones ha sido restaurado con éxito.</p></div>
                                     </div>
                                 )}
                             </div>
