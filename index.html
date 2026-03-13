@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v4.4 Neon Pulse</title>
+    <title>EDK APP ULTRA Pro - v5.8 Photon Flux</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
@@ -32,7 +32,8 @@
         
         :root {
             --gloss-angle: 135deg;
-            --accent-color: #00d2ff;
+            --dynamic-rgb: #00d2ff;
+            --rgb-values: 0, 210, 255;
         }
 
         body { 
@@ -48,20 +49,19 @@
             width: 100vw;
         }
 
-        /* --- ARQUITECTURA FIXED SHELL CON BORDE METÁLICO AMARILLO --- */
+        /* --- CHASIS FÍSICO 6,3" (395x854) --- */
         .app-container { 
             position: relative; 
-            width: 100%; 
-            height: 100%; 
-            max-width: 410px; 
+            width: 395px; 
+            height: 854px; 
             background-color: #020617; 
             overflow: hidden; 
             display: flex; 
             flex-direction: column; 
             box-sizing: border-box;
             
-            /* Borde Metálico Dinámico (Oro Táctico por defecto) */
-            border: 4px solid transparent;
+            border: 10px solid transparent;
+            border-radius: 3.2rem;
             background-image: linear-gradient(#020617, #020617), 
                               linear-gradient(var(--gloss-angle), 
                                 #8a6d3b 0%, 
@@ -71,164 +71,126 @@
                                 #8a6d3b 100%);
             background-origin: border-box;
             background-clip: padding-box, border-box;
-            transition: background-image 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
+            transition: background-image 0.5s ease-out;
         }
 
-        /* --- EFECTO NEON PULSE AL CAMBIAR SECCIÓN --- */
+        @keyframes border-glow-pulse {
+            0% { filter: brightness(1); box-shadow: 0 0 20px rgba(var(--rgb-values), 0.2); }
+            30% { filter: brightness(2); box-shadow: 0 0 60px rgba(var(--rgb-values), 0.8); }
+            100% { filter: brightness(1); box-shadow: 0 0 20px rgba(var(--rgb-values), 0.2); }
+        }
+
+        /* --- EFECTO DE PULSACIÓN AL CAMBIAR SECCIÓN --- */
         .border-pulse-active {
+            animation: border-glow-pulse 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             background-image: linear-gradient(#020617, #020617), 
                               linear-gradient(var(--gloss-angle), 
-                                #0041ff 0%, 
-                                #00d2ff 25%, 
-                                #ffffff 50%, 
-                                #00d2ff 75%, 
-                                #0041ff 100%) !important;
-            box-shadow: 0 0 25px rgba(0, 210, 255, 0.6) !important;
+                                var(--dynamic-rgb) 0%, 
+                                #ffffff 40%, 
+                                var(--dynamic-rgb) 60%, 
+                                #ffffff 100%) !important;
         }
 
-        @media (min-width: 640px) { 
-            .app-container { 
-                border: 10px solid transparent;
-                border-radius: 3.5rem; 
-                height: 880px; 
-            } 
+        .laser-engraving-label {
+            position: absolute; left: -4px; top: 50%; transform: translateY(-50%) rotate(-90deg);
+            font-family: 'JetBrains Mono', monospace; font-size: 7px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 2px; color: rgba(0, 0, 0, 0.3);
+            text-shadow: 0.5px 0.5px 0px rgba(255, 255, 255, 0.15); pointer-events: none; z-index: 5;
+            white-space: nowrap;
         }
 
-        /* Área de Scroll Interna Optimizada para Táctil */
-        .main-scroll-viewport {
+        /* --- MÓDULO TÁCTICO UNIFICADO (420px) --- */
+        .tactical-module {
+            width: 100%;
+            height: 420px; 
+            background: rgba(0, 0, 0, 0.6); 
+            border: 1.5px solid var(--dynamic-rgb);
+            box-shadow: 0 0 25px rgba(var(--rgb-values), 0.15), inset 0 0 15px rgba(var(--rgb-values), 0.05);
+            border-radius: 2.2rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s ease;
+        }
+
+        .module-scroll-area {
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            -webkit-overflow-scrolling: touch; 
-            overscroll-behavior-y: contain;
-            position: relative;
-            z-index: 10;
-            touch-action: pan-y; 
+            -webkit-overflow-scrolling: touch;
+            padding: 1.5rem;
+            touch-action: pan-y;
         }
+        .module-scroll-area::-webkit-scrollbar { display: none; }
 
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .content-padding { padding: 1.5rem; padding-bottom: 160px; }
+        .main-scroll-viewport { flex: 1; overflow: hidden; position: relative; z-index: 10; }
+        .content-padding { height: 100%; padding: 1.5rem; display: flex; flex-direction: column; justify-content: center; }
 
-        /* --- TRANSICIÓN GLITCH (TEMPORAL BREACH) --- */
-        .breach-active {
-            animation: temporal-glitch 0.3s steps(2) infinite;
-            filter: contrast(1.4) brightness(1.1);
+        .breach-active { animation: temporal-glitch 0.3s steps(2) infinite; filter: contrast(1.4); }
+        @keyframes temporal-glitch { 0% { transform: translate(0); } 50% { opacity: 0.7; transform: translate(-1px, 1px); } 100% { transform: translate(0); } }
+
+        /* Nav Dock */
+        .nav-dock-container {
+            position: absolute; bottom: 0; width: 100%;
+            background: linear-gradient(to top, #020617 92%, transparent);
+            padding: 10px 0 30px 0; z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
         }
-
-        @keyframes temporal-glitch {
-            0% { transform: translate(0); clip-path: inset(0 0 0 0); }
-            25% { transform: translate(-2px, 2px); clip-path: inset(10% 0 40% 0); text-shadow: 2px 0 #ff0000, -2px 0 #00ffff; }
-            50% { transform: translate(2px, -1px); clip-path: inset(50% 0 10% 0); }
-            100% { transform: translate(0); clip-path: inset(0 0 0 0); }
-        }
-
-        /* --- DOCK TÁCTICO --- */
-        .nav-dock {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 110px;
-            background: linear-gradient(to top, #020617 85%, transparent);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 1rem;
-            z-index: 100;
-        }
-
-        .nav-btn-wrapper {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(25px);
-            border-radius: 1.4rem;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        }
-
-        .nav-btn-wrapper.active {
-            background: white;
-            border-color: white;
-            transform: translateY(-10px);
-            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.25);
-        }
-
-        .nav-btn-wrapper.active svg { stroke: black; }
-        .nav-btn-wrapper.master-active { background: #2563eb !important; border-color: #60a5fa !important; box-shadow: 0 0 20px rgba(37, 99, 235, 0.4) !important; }
-
-        /* --- UI ELEMENTS --- */
-        .master-card { 
-            background: rgba(255, 255, 255, 0.03); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            backdrop-filter: blur(25px); 
-            border-radius: 2.5rem; 
-            padding: 1.5rem; 
-            position: relative; 
-        }
-
-        .ranking-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 1.5rem; margin-bottom: 10px; }
-        .roblox-verified-wrapper { width: 18px; height: 18px; margin-left: 6px; flex-shrink: 0; }
+        .nav-row { display: flex; justify-content: space-around; width: 100%; padding: 0 1rem; }
         
-        /* --- FILTROS DE CÁMARA --- */
-        .camera-feed { width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease; }
-        .filter-night { filter: sepia(100%) hue-rotate(90deg) brightness(1.2) contrast(1.2) !important; }
-        .filter-thermal { filter: invert(100%) hue-rotate(180deg) saturate(3) !important; }
-        .filter-glitch { animation: glitch-anim 0.2s infinite; }
-        .filter-pixel { image-rendering: pixelated; filter: contrast(1.2) brightness(1.1) !important; }
-        .filter-neon { filter: url(#edk-neon-filter) !important; background: #000; }
-
-        @keyframes glitch-anim {
-            0% { filter: contrast(1.5) hue-rotate(0deg); transform: translate(1px, 1px); }
-            50% { filter: contrast(2) hue-rotate(90deg); transform: translate(-1px, -1px); }
-            100% { filter: contrast(1.5) hue-rotate(0deg); transform: translate(1px, 1px); }
+        .nav-btn-wrapper {
+            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(35px); border-radius: 1.1rem; width: 42px; height: 42px;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
         }
+        .nav-btn-wrapper.active { background: white; transform: translateY(-5px) scale(1.1); box-shadow: 0 0 20px var(--dynamic-rgb); }
+        .nav-btn-wrapper.active svg { stroke: black; fill: transparent; }
 
-        .filter-button { padding: 6px 14px; border-radius: 10px; font-size: 8px; font-weight: 900; text-transform: uppercase; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
-        .filter-button.active { background: var(--accent-color); color: #000; box-shadow: 0 0 10px var(--accent-color); }
-        .logo-stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; opacity: 0.4; filter: drop-shadow(0 0 10px var(--accent-color)); pointer-events: none; }
+        /* Mockup VIP */
+        .vip-card-mockup {
+            width: 100%; aspect-ratio: 1.58/1; border-radius: 1.4rem; position: relative; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.8);
+        }
+        .material-pvc { background: linear-gradient(135deg, #0f172a 0%, #000 100%); border: 1px solid rgba(255,255,255,0.05); }
+        .material-metal { background: linear-gradient(135deg, #1f2937 0%, #000 100%); border: 1px solid rgba(255,255,255,0.2); }
+        .card-shine { position: absolute; inset: -100%; background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%); animation: card-glide 5s infinite linear; }
+        @keyframes card-glide { from { transform: translateX(-30%); } to { transform: translateX(30%); } }
 
-        /* --- BIOMETRICS --- */
-        .progress-ring-circle { stroke: var(--accent-color); stroke-width: 4; fill: transparent; stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset 2s linear; }
+        .camera-feed { width: 100%; height: 100%; object-fit: cover; }
+        .logo-stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; opacity: 0.2; filter: drop-shadow(0 0 10px var(--dynamic-rgb)); }
+        
+        .ranking-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 1rem; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 6px; }
+        .notif-card { background: rgba(255,255,255,0.03); border-left: 3px solid var(--dynamic-rgb); border-radius: 0.8rem; padding: 12px; margin-bottom: 10px; }
+        
+        .vault-lock-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; z-index: 50; }
+        .progress-ring-circle { stroke: var(--dynamic-rgb); stroke-width: 4; fill: transparent; stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset 2s linear; }
         .scanning .progress-ring-circle { stroke-dashoffset: 0; }
-        .electric-laser { position: absolute; left: 0; width: 100%; height: 3px; background: var(--accent-color); box-shadow: 0 0 15px var(--accent-color); animation: scan-move 2s linear infinite; z-index: 2; }
-        @keyframes scan-move { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+        .electric-laser { position: absolute; left: 0; width: 100%; height: 2px; background: var(--dynamic-rgb); box-shadow: 0 0 10px var(--dynamic-rgb); animation: scan-move 2s linear infinite; z-index: 2; }
+        @keyframes scan-move { 0% { top: 0%; } 100% { top: 100%; } }
 
-        /* --- BÓVEDA SECRETA --- */
-        .vault-lock-overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-            padding: 2rem; z-index: 50;
-        }
+        .filter-button { padding: 5px 12px; border-radius: 8px; font-size: 7px; font-weight: 900; text-transform: uppercase; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
+        .filter-button.active { background: var(--dynamic-rgb); color: #000; box-shadow: 0 0 8px var(--dynamic-rgb); }
 
-        .shake-icon-anim {
-            animation: shake-device 1.5s ease-in-out infinite;
+        /* --- ESTILOS LINTERNA --- */
+        .flashlight-beam {
+            position: absolute; inset: 0; transition: background-color 0.3s ease;
+            display: flex; items-center justify-center;
         }
-        @keyframes shake-device {
-            0%, 100% { transform: rotate(0deg); }
-            20% { transform: rotate(15deg); }
-            40% { transform: rotate(-15deg); }
-            60% { transform: rotate(10deg); }
-            80% { transform: rotate(-10deg); }
+        .flashlight-switch {
+            width: 80px; height: 80px; border-radius: 100%; border: 2px solid white;
+            display: flex; items-center justify-center; transition: all 0.2s;
         }
-
-        /* --- SENTINEL ALERT --- */
-        .tamper-alert { position: fixed; inset: 0; background: rgba(127, 29, 29, 0.98); backdrop-filter: blur(20px); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; animation: pulse-red 1s infinite alternate; }
-        @keyframes pulse-red { from { background: rgba(127, 29, 29, 0.98); } to { background: rgba(185, 28, 28, 0.98); } }
-        @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-220%); } }
-        .ticker-text { display: inline-block; white-space: nowrap; animation: ticker 25s linear infinite; }
+        .flashlight-active { background: white; color: black; box-shadow: 0 0 40px white; }
     </style>
 </head>
 <body id="app-body">
-    <!-- FILTRO NEÓN DINÁMICO -->
     <svg style="position: absolute; width: 0; height: 0;">
         <filter id="edk-neon-filter">
             <feConvolveMatrix kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1" />
             <feColorMatrix id="neon-color-matrix" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" />
-            <feGaussianBlur stdDeviation="0.5" />
+            <feGaussianBlur stdDeviation="0.4" />
         </filter>
     </svg>
 
@@ -237,16 +199,22 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const Icon = ({ name, className = "w-6 h-6", color = "currentColor" }) => {
+        const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
             const icons = {
                 home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
                 id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM4 8v10h16V8H4z" />,
                 shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
-                cpu: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM9 9h6v6H9V9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3" />,
+                cpu: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM9 9h6v6H9V9z" />,
                 camera: <React.Fragment><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></React.Fragment>,
                 terminal: <path d="M4 17l6-6-6-6M12 19h8" />,
-                fingerprint: <path d="M2 12a10 10 0 0 1 20 0M7 12a5 5 0 0 1 10 0M5 8a8 8 0 0 1 14 0M9 16a3 3 0 0 1 6 0M12 12v4" />,
-                lock: <path d="M7 11V7a5 5 0 0 1 9.9-1M17 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />,
+                fingerprint: <path d="M2 12a10 10 0 0 1 20 0M7 12a5 5 0 0 1 10 0" />,
+                lock: <path d="M7 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />,
+                bell: <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />,
+                info: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" /></React.Fragment>,
+                pen: <path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-1.5M2 22h5l11-11-5-5L2 17v5z" />,
+                palette: <React.Fragment><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.5 2-1.2"/></React.Fragment>,
+                creditCard: <path d="M2 5h20v14H2zM2 10h20" />,
+                bolt: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />,
                 roblox_verified: <React.Fragment>
                     <path d="M4.332 7.002L13.332 3.002C14.444 2.508 15.753 3.004 16.257 4.11L20.257 13.11C20.761 14.216 20.265 15.525 19.159 16.029L10.159 20.029C9.053 20.533 7.744 20.037 7.24 18.931L3.24 9.931C2.736 8.825 3.232 7.516 4.332 7.002Z" fill="#0084ff" />
                     <path d="M8.5 12L10.5 14L15.5 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -259,136 +227,105 @@
             const [activeTab, setActiveTab] = useState('home');
             const [isBreaching, setIsBreaching] = useState(false);
             const [isPulseActive, setIsPulseActive] = useState(false);
-            const [theme, setTheme] = useState(() => localStorage.getItem('edk_ultra_theme') || 'blue');
-            const [xp, setXp] = useState(() => parseInt(localStorage.getItem('edk_ultra_xp')) || 0);
+            const [dynamicColor, setDynamicColor] = useState(() => localStorage.getItem('edk_dynamic_rgb') || '#00d2ff');
+            const [engravedName, setEngravedName] = useState(() => localStorage.getItem('edk_engraving') || 'AGENTE EDK');
+            const [cardMaterial, setCardMaterial] = useState('metal');
+            
+            const [isUnlocked, setIsUnlocked] = useState(false);
+            const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
             const [isOwner, setIsOwner] = useState(false);
             const [showLoginModal, setShowLoginModal] = useState(true);
             const [passInput, setPassInput] = useState('');
-            const [tamperDetected, setTamperDetected] = useState(false);
-            
-            // Security & Vault
             const [isScanning, setIsScanning] = useState(false);
-            const [isUnlocked, setIsUnlocked] = useState(false);
-            const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
-            const scanTimerRef = useRef(null);
-
+            const [activeFilter, setActiveFilter] = useState('none');
+            
+            const [torchOn, setTorchOn] = useState(false);
+            const [flashlightColor, setFlashlightColor] = useState('#ffffff');
+            
             const videoRef = useRef(null);
             const qrRef = useRef(null);
-            const [streamActive, setStreamActive] = useState(false);
-            const [activeFilter, setActiveFilter] = useState('none');
+            const scanTimerRef = useRef(null);
 
-            const themes = {
-                blue: { color: '#00d2ff', grad: 'from-blue-600 to-cyan-950', matrix: "0 0 0 0 0  0 0.8 0 0 0  0 1 1 0 0  0 0 0 1 0" },
-                red: { color: '#ff4b2b', grad: 'from-red-600 to-orange-950', matrix: "1 0 0 0 0  0 0.1 0 0 0  0 0.1 0 0 0  0 0 0 1 0" },
-                gold: { color: '#f9d423', grad: 'from-yellow-500 to-amber-950', matrix: "1 0 0 0 0  0 0.8 0 0 0  0 0.1 0 0 0  0 0 0 1 0" },
-                green: { color: '#00ff41', grad: 'from-green-600 to-emerald-950', matrix: "0 0 0 0 0  0 1 0 0 0  0 0 0.2 0 0  0 0 0 1 0" }
-            };
-
-            const activeTheme = themes[theme];
-
-            // --- PROTOCOLO DE MOVIMIENTO (BÓVEDA) & SENTINEL ---
             useEffect(() => {
                 const handleOrientation = (e) => {
                     const angle = (e.gamma || 0) + (e.beta || 0) + 135;
                     document.documentElement.style.setProperty('--gloss-angle', `${angle}deg`);
                 };
-
                 const handleMotion = (e) => {
-                    const acc = e.accelerationIncludingGravity;
-                    if (!acc) return;
-                    const total = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-                    if (total > 25) { 
-                        setIsVaultUnlocked(true);
-                    }
+                    if (Math.sqrt((e.accelerationIncludingGravity?.x || 0)**2 + (e.accelerationIncludingGravity?.y || 0)**2) > 28) setIsVaultUnlocked(true);
                 };
-
-                const handleKey = (e) => {
-                    if (!isOwner && !showLoginModal && (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85))) {
-                        setTamperDetected(true); e.preventDefault();
-                    }
-                };
-
                 window.addEventListener('deviceorientation', handleOrientation);
                 window.addEventListener('devicemotion', handleMotion);
-                window.addEventListener('keydown', handleKey);
-                document.addEventListener('contextmenu', (e) => !isOwner && e.preventDefault());
-
                 return () => {
                     window.removeEventListener('deviceorientation', handleOrientation);
                     window.removeEventListener('devicemotion', handleMotion);
-                    window.removeEventListener('keydown', handleKey);
                 };
-            }, [isOwner, showLoginModal]);
-
-            // --- LÓGICA DE PULSO NEÓN AL CAMBIAR TAB ---
-            const handleTabChange = (tab) => {
-                if (tab === activeTab) return;
-                setIsBreaching(true);
-                setIsPulseActive(true);
-                setTimeout(() => {
-                    setActiveTab(tab);
-                    setIsBreaching(false);
-                }, 300);
-                setTimeout(() => {
-                    setIsPulseActive(false);
-                }, 600); // El pulso dura un poco más que el glitch para suavidad
-            };
+            }, []);
 
             useEffect(() => {
-                const matrix = document.getElementById('neon-color-matrix');
-                if (matrix) matrix.setAttribute('values', activeTheme.matrix);
-                document.documentElement.style.setProperty('--accent-color', activeTheme.color);
-            }, [theme]);
+                document.documentElement.style.setProperty('--dynamic-rgb', dynamicColor);
+                localStorage.setItem('edk_dynamic_rgb', dynamicColor);
+                const hexToRgb = (hex) => {
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    return `${r}, ${g}, ${b}`;
+                };
+                document.documentElement.style.setProperty('--rgb-values', hexToRgb(dynamicColor));
+            }, [dynamicColor]);
 
             useEffect(() => {
                 if (activeTab === 'home' && qrRef.current && !showLoginModal) {
                     qrRef.current.innerHTML = "";
-                    new QRCode(qrRef.current, { text: window.location.href, width: 160, height: 160 });
+                    new QRCode(qrRef.current, { text: window.location.href, width: 140, height: 140 });
                 }
             }, [activeTab, showLoginModal]);
 
-            useEffect(() => {
-                if (activeTab === 'vision' && !streamActive) {
-                    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                        .then(s => { if(videoRef.current) { videoRef.current.srcObject = s; setStreamActive(true); } })
-                        .catch(e => console.error(e));
-                } else if (activeTab !== 'vision' && streamActive) {
-                    videoRef.current?.srcObject?.getTracks().forEach(t => t.stop()); setStreamActive(false);
-                }
-            }, [activeTab]);
+            const handleTabChange = (tab) => {
+                if (tab === activeTab) return;
+                setIsBreaching(true);
+                setIsPulseActive(true);
+                setTimeout(() => { setActiveTab(tab); setIsBreaching(false); }, 300);
+                setTimeout(() => setIsPulseActive(false), 700);
+            };
+
+            const togglePhysicalTorch = async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    const track = stream.getVideoTracks()[0];
+                    const caps = track.getCapabilities();
+                    if (caps.torch) {
+                        await track.applyConstraints({ advanced: [{ torch: !torchOn }] });
+                        setTorchOn(!torchOn);
+                    } else {
+                        alert("Linterna física no soportada en este navegador.");
+                    }
+                } catch (e) { console.error(e); }
+            };
 
             const topVerified = [
-                { id: 1, name: "Roblox", uid: "1" }, { id: 2, name: "Builderman", uid: "16" }, { id: 3, name: "David Baszucki", uid: "261" },
-                { id: 26, name: "MiniToon", uid: "13614532" }, { id: 27, name: "Dued1", uid: "21960" }, { id: 28, name: "27kDomin", uid: "172937740" },
-                { id: 29, name: "ElDramaKing_ALT", uid: "4323201413" }, { id: 30, name: "haz3mn", uid: "121966023" }, { id: 31, name: "muneeb", uid: "33458739" }, 
-                { id: 32, name: "ferscodev", uid: "104683056" }, { id: 33, name: "olix", uid: "44342240" }, { id: 34, name: "ProjectSupreme", uid: "66497740" },
-                { id: 40, name: "Rdite", uid: "194356" }, { id: 50, name: "manato48", uid: "33333333" },
-                ...Array.from({ length: 36 }, (_, i) => ({ id: i+60, name: `Elite_Agent_${i+60}`, uid: "1" }))
+                { id: 1, name: "Roblox", uid: "1" }, { id: 2, name: "Builderman", uid: "16" }, { id: 26, name: "MiniToon", uid: "13614532" },
+                { id: 31, name: "muneeb", uid: "33458739" }, { id: 50, name: "manato48", uid: "33333333" },
+                ...Array.from({ length: 15 }, (_, i) => ({ id: i+100, name: `Agent_Elite_${i+10}`, uid: "1" }))
             ];
 
-            if (tamperDetected && !isOwner) {
-                return (
-                    <div className="tamper-alert font-black">
-                        <div className="bg-white text-red-700 p-8 rounded-full mb-8 animate-bounce"><Icon name="shield" className="w-16 h-16" color="#b91c1c" /></div>
-                        <h1 className="text-4xl uppercase italic tracking-tighter mb-4 text-white">SENTINEL ACTIVE</h1>
-                        <p className="text-xl text-red-200 uppercase italic">Manipulación del Kernel detectada</p>
-                        <button onClick={() => setTamperDetected(false)} className="mt-12 px-12 py-4 bg-white text-red-700 rounded-2xl uppercase text-xs font-black shadow-xl">Reiniciar</button>
-                    </div>
-                );
-            }
+            const sectionTitles = {
+                home: "Symmetry Prime", ranking: "Elite Ranking", notifs: "Notificaciones",
+                laser: "Grabado Láser", rgb: "Iluminación RGB", mockup: "VIP Mockup",
+                vision: "Visión EDK", vault: "Bóveda Táctica", secure: "Seguridad",
+                admin: "Administración", info: "Sistema", identity: "Perfil",
+                light: "Linterna Fotónica"
+            };
 
             if (showLoginModal) {
                 return (
                     <div className="app-container">
-                        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-2xl">
-                            <div className="master-card w-full max-w-[320px] text-center space-y-6 border-white/20 animate-in">
-                                <div className="w-20 h-20 mx-auto bg-white/5 rounded-3xl p-3 border border-white/10 shadow-2xl">
-                                    <img src="edkultra.svg" className="w-full h-full object-contain" alt="Logo" />
-                                </div>
-                                <h2 className="text-xl font-black uppercase italic tracking-tighter">Acceso de Red</h2>
-                                <input type="password" placeholder="Clave Master..." value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center font-mono text-xl text-white outline-none focus:border-blue-500" />
-                                <button onClick={() => { if(passInput === '1234') setIsOwner(true); setShowLoginModal(false); }} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Autorizar</button>
-                                <button onClick={() => setShowLoginModal(false)} className="text-white/40 text-[9px] font-bold uppercase tracking-widest">Modo Invitado</button>
+                        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-3xl">
+                            <div className="tactical-module w-full max-w-[320px] h-auto p-8 text-center space-y-6 border-white/20 animate-in">
+                                <img src="edkultra.svg" className="w-16 h-16 mx-auto" alt="L" />
+                                <h2 className="text-xl font-black uppercase italic tracking-tighter">Terminal EDK</h2>
+                                <input type="password" placeholder="Passphrase..." value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 font-mono text-center text-white outline-none focus:border-blue-500" />
+                                <button onClick={() => { if(passInput === '1234') setIsOwner(true); setShowLoginModal(false); }} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Validar</button>
                             </div>
                         </div>
                     </div>
@@ -397,151 +334,170 @@
 
             return (
                 <div className={`app-container animate-in no-select ${isPulseActive ? 'border-pulse-active' : ''}`}>
-                    <header className="h-24 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 pt-6 border-b border-white/5 flex-shrink-0">
-                        <div>
-                            <p className="text-[8px] font-black uppercase tracking-widest text-white/30">Protocolo v4.4 {isOwner ? '• MASTER' : ''}</p>
-                            <h1 className="text-lg font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
-                        </div>
-                        <img src="edkultra.svg" className="w-10 h-10 rounded-xl shadow-xl" alt="Logo" />
+                    <div className="laser-engraving-label">{engravedName} // PHOTON-FLUX-V5.8</div>
+
+                    <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5 flex-shrink-0">
+                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Precise 6.3" Frame</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
+                        <img src="edkultra.svg" className="w-8 h-8 rounded-lg shadow-xl" style={{ filter: `drop-shadow(0 0 10px ${dynamicColor})` }} alt="Logo" />
                     </header>
 
-                    <div className="ticker-container h-8 flex items-center overflow-hidden border-b border-white/5 flex-shrink-0 bg-slate-900/50">
-                        <div className="bg-blue-600 h-full flex items-center px-3 z-10 shadow-[5px_0_15px_rgba(0,0,0,0.5)]"><span className="text-[7px] font-black uppercase tracking-tighter text-white">RED EDK</span></div>
-                        <div className="flex-grow"><p className="ticker-text text-[9px] font-bold text-white/80 italic">NEON PULSE SYNCED • SENTINEL SYSTEM ON • VAULT READY • </p></div>
-                    </div>
-
-                    <main className={`main-scroll-viewport scrollbar-hide ${isBreaching ? 'breach-active' : ''}`}>
+                    <main className={`main-scroll-viewport ${isBreaching ? 'breach-active' : ''}`}>
                         <div className="content-padding">
-                            {activeTab === 'home' && (
-                                <div className="space-y-6 animate-in">
-                                    <div className={`master-card border-none bg-gradient-to-br ${activeTheme.grad} min-h-[160px] flex flex-col justify-end shadow-2xl overflow-hidden`}>
-                                        <div className="absolute top-4 right-4 w-12 h-12 opacity-20"><img src="edkultra.svg" alt="Icon" /></div>
-                                        <h2 className="text-2xl font-black italic uppercase leading-none mb-1">SINGULARITY</h2>
-                                        <p className="text-[9px] font-bold opacity-60 uppercase tracking-widest">Sincronización Completa</p>
-                                    </div>
-                                    <div className="master-card flex flex-col items-center gap-6 text-center">
-                                        <div className="p-3 bg-white rounded-2xl shadow-xl"><div id="share-qr" ref={qrRef}></div></div>
-                                    </div>
-                                </div>
-                            )}
+                            
+                            <h2 className="text-lg font-black italic uppercase mb-4 flex items-center gap-2">
+                                <Icon name={activeTab === 'ranking' ? 'roblox_verified' : (activeTab === 'light' ? 'bolt' : 'cpu')} color={dynamicColor} />
+                                {sectionTitles[activeTab]}
+                            </h2>
 
-                            {activeTab === 'ranking' && (
-                                <div className="animate-in space-y-6">
-                                    <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="roblox_verified" color={activeTheme.color} className="w-7 h-7" /> Elite Ranking</h2>
-                                    <div className="flex flex-col">
-                                        {topVerified.map((u, i) => (
-                                            <div key={i} className="ranking-item">
-                                                <div className="relative flex-shrink-0">
-                                                    <img src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${u.uid}&size=150x150&format=Png&isCircular=true`} className="w-12 h-12 rounded-full border border-white/10 bg-slate-900" alt={u.name} onError={(e) => e.target.src="edkultra.svg"} />
-                                                    <div className="absolute -bottom-1 -right-1 bg-slate-950 border border-white/10 text-[8px] font-bold px-1.5 rounded-full text-white/60">#{i+1}</div>
-                                                </div>
-                                                <div className="flex flex-col overflow-hidden">
-                                                    <div className="flex items-center">
-                                                        <span className="text-sm font-bold truncate max-w-[140px]">{u.name}</span>
-                                                        <div className="w-4 h-4 ml-1.5"><Icon name="roblox_verified" className="w-full h-full" /></div>
-                                                    </div>
-                                                    <span className="text-[8px] opacity-30 font-mono">UID: {u.uid}</span>
-                                                </div>
+                            <div className="tactical-module">
+                                {activeTab === 'home' && (
+                                    <div className="module-scroll-area flex flex-col justify-center items-center space-y-8 text-center animate-in">
+                                        <div className="bg-gradient-to-br from-slate-900 to-black p-8 rounded-3xl border border-white/5 shadow-xl w-full">
+                                            <h2 className="text-2xl font-black italic uppercase leading-tight">SYSTEM <br/> <span style={{ color: dynamicColor }}>ONLINE</span></h2>
+                                        </div>
+                                        <div className="p-2 bg-white rounded-xl shadow-xl"><div id="share-qr" ref={qrRef}></div></div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'light' && (
+                                    <div className="relative w-full h-full animate-in flex flex-col">
+                                        <div className="flashlight-beam flex-1 flex flex-col items-center justify-center p-6" style={{ backgroundColor: flashlightColor + '22' }}>
+                                            <div onClick={togglePhysicalTorch} className={`flashlight-switch cursor-pointer mb-8 ${torchOn ? 'flashlight-active' : ''}`}>
+                                                <Icon name="bolt" className="w-10 h-10" color={torchOn ? "black" : "white"} />
                                             </div>
-                                        ))}
+                                            <p className="text-[10px] font-black uppercase mb-4">Luz de Pantalla</p>
+                                            <div className="flex gap-4">
+                                                {['#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00'].map(c => (
+                                                    <button key={c} onClick={() => setFlashlightColor(c)} className="w-8 h-8 rounded-full border-2 border-white/20" style={{ backgroundColor: c }}></button>
+                                                ))}
+                                            </div>
+                                            <div className="mt-8 w-full h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: flashlightColor }}>
+                                                <span className="text-[10px] font-black uppercase text-black mix-blend-difference">Emisión Fotónica</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {activeTab === 'vision' && (
-                                <div className="animate-in space-y-6 h-full flex flex-col">
-                                    <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="camera" color={activeTheme.color} /> Visión EDK</h2>
-                                    <div className="master-card p-0 overflow-hidden relative min-h-[420px] border border-white/10 bg-black">
+                                {activeTab === 'ranking' && (
+                                    <div className="module-scroll-area animate-in">
+                                        <div className="space-y-1">
+                                            {topVerified.map((u, i) => (
+                                                <div key={i} className="ranking-item">
+                                                    <img src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${u.uid}&size=150x150&format=Png&isCircular=true`} className="w-8 h-8 rounded-full border border-white/10" alt={u.name} onError={(e) => e.target.src="edkultra.svg"} />
+                                                    <div className="flex-1"><span className="text-xs font-bold truncate block">{u.name}</span></div>
+                                                    <span className="text-[10px] font-black opacity-20">#{i+1}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'notifs' && (
+                                    <div className="module-scroll-area space-y-4 animate-in">
+                                        <div className="notif-card"><span className="text-[8px] font-black text-blue-400">FLUX PROTOCOL</span><p className="text-[10px] opacity-60 mt-1">Sección de linterna táctica integrada con éxito.</p></div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'laser' && (
+                                    <div className="module-scroll-area flex flex-col justify-center space-y-6 animate-in text-center">
+                                        <input type="text" value={engravedName} onChange={(e) => setEngravedName(e.target.value.toUpperCase().slice(0, 15))} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-4 font-mono text-center text-sm text-white outline-none focus:border-blue-500" />
+                                        <p className="text-[7px] text-center opacity-40 uppercase font-black">Tallando chasis lateral...</p>
+                                    </div>
+                                )}
+
+                                {activeTab === 'rgb' && (
+                                    <div className="module-scroll-area flex flex-col items-center justify-center space-y-8 animate-in text-center">
+                                        <div className="w-16 h-16 rounded-full shadow-2xl" style={{ backgroundColor: dynamicColor, filter: `blur(15px) brightness(1.5)` }}></div>
+                                        <input type="color" value={dynamicColor} onChange={(e) => setDynamicColor(e.target.value)} className="w-full h-12 bg-transparent cursor-pointer rounded-lg" />
+                                        <div className="flex justify-between w-full px-4">
+                                            {['#00d2ff', '#ff4b2b', '#f9d423', '#00ff41', '#8200ff'].map(c => (
+                                                <button key={c} onClick={() => setDynamicColor(c)} className="w-6 h-6 rounded-full border border-white/20" style={{ backgroundColor: c }}></button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'mockup' && (
+                                    <div className="module-scroll-area space-y-6 animate-in">
+                                        <div className={`vip-card-mockup material-${cardMaterial}`}>
+                                            <div className="card-shine"></div>
+                                            <div className="flex justify-between items-start z-10"><div className="w-8 h-8 bg-white/10 rounded-lg p-2"><img src="edkultra.svg" alt="L" /></div><p className="text-[8px] font-bold" style={{ color: dynamicColor }}>ELITE UNIT</p></div>
+                                            <div className="z-10 mt-auto"><h3 className="text-sm font-black italic uppercase tracking-tighter">{engravedName}</h3><Icon name="roblox_verified" className="w-6 h-6 ml-auto" /></div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setCardMaterial('pvc')} className={`flex-1 py-3 rounded-lg font-black text-[7px] uppercase border ${cardMaterial === 'pvc' ? 'bg-white text-black' : 'bg-white/5 border-white/10'}`}>PVC</button>
+                                            <button onClick={() => setCardMaterial('metal')} className={`flex-1 py-3 rounded-lg font-black text-[7px] uppercase border ${cardMaterial === 'metal' ? 'bg-white text-black' : 'bg-white/5 border-white/10'}`}>Metal</button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'vision' && (
+                                    <div className="relative w-full h-full animate-in">
                                         <video ref={videoRef} autoPlay playsInline className={`camera-feed filter-${activeFilter}`}></video>
-                                        <img src="edkultra.svg" className="logo-stamp" alt="Stamp" />
-                                        <div className="absolute bottom-6 left-0 w-full overflow-x-auto scrollbar-hide px-6 flex gap-3 z-30">
+                                        <img src="edkultra.svg" className="logo-stamp" alt="S" />
+                                        <div className="absolute bottom-4 left-0 w-full overflow-x-auto scrollbar-hide px-4 flex gap-2 z-30">
                                             {['none', 'neon', 'night', 'thermal', 'pixel', 'glitch'].map(f => (
                                                 <button key={f} onClick={() => setActiveFilter(f)} className={`filter-button ${activeFilter === f ? 'active' : ''}`}>{f}</button>
                                             ))}
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {(activeTab === 'secure' || activeTab === 'admin') && (
-                                <div className="animate-in space-y-6 h-full flex flex-col">
-                                    <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="shield" color={activeTheme.color} /> Seguridad</h2>
-                                    <div className="master-card flex-grow flex flex-col items-center justify-center min-h-[350px]">
-                                        {!isUnlocked ? (
-                                            <div className="text-center space-y-10">
-                                                <div 
-                                                    className={`relative w-44 h-44 mx-auto rounded-[3.5rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden cursor-pointer transition-all ${isScanning ? 'scale-105 shadow-[0_0_30px_rgba(0,242,255,0.2)]' : 'active:scale-95'}`}
-                                                    onMouseDown={(e) => { e.preventDefault(); setIsScanning(true); scanTimerRef.current = setTimeout(() => { setIsUnlocked(true); setIsScanning(false); }, 2000); }} 
-                                                    onTouchStart={(e) => { e.preventDefault(); setIsScanning(true); scanTimerRef.current = setTimeout(() => { setIsUnlocked(true); setIsScanning(false); }, 2000); }} 
-                                                    onMouseUp={() => { if(scanTimerRef.current) clearTimeout(scanTimerRef.current); setIsScanning(false); }}
-                                                    onTouchEnd={() => { if(scanTimerRef.current) clearTimeout(scanTimerRef.current); setIsScanning(false); }}
-                                                >
-                                                    {isScanning && <div className="absolute inset-0 electric-laser" />}
-                                                    <svg className={`absolute inset-0 w-full h-full ${isScanning ? 'scanning' : ''}`}><circle className="progress-ring-circle" r="85" cx="88" cy="88" /></svg>
-                                                    <Icon name="fingerprint" className={`w-24 h-24 transition-all duration-500 ${isScanning ? 'text-cyan-400' : 'opacity-20'}`} />
-                                                </div>
-                                                <h3 className="text-sm font-black uppercase italic tracking-widest">{isScanning ? 'Validando...' : 'Mantener Huella'}</h3>
+                                {activeTab === 'vault' && (
+                                    <div className="relative w-full h-full animate-in">
+                                        {!isVaultUnlocked ? (
+                                            <div className="vault-lock-overlay">
+                                                <Icon name="cpu" className="w-12 h-12 mb-4 text-white/40 animate-pulse" />
+                                                <p className="text-[8px] font-black uppercase tracking-widest opacity-40">Movimiento Requerido</p>
+                                                <button onClick={() => setIsVaultUnlocked(true)} className="mt-4 text-[6px] opacity-10 uppercase">Bypass</button>
                                             </div>
                                         ) : (
-                                            <div className="text-center space-y-8 animate-in">
-                                                <Icon name="shield" className="w-16 h-16 mx-auto text-green-400 shadow-xl" />
-                                                <h3 className="text-xl font-black italic uppercase">Acceso Autorizado</h3>
-                                                <button onClick={() => setIsUnlocked(false)} className="py-4 px-8 bg-white text-black rounded-2xl font-black text-[10px] uppercase w-full shadow-2xl">Bloquear</button>
+                                            <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 text-center">
+                                                <Icon name="roblox_verified" className="w-12 h-12" color="#f9d423" />
+                                                <button className="py-4 px-8 bg-yellow-500 text-black rounded-xl font-black text-[9px] uppercase shadow-xl active:scale-95 transition-transform">Reclamar Verificado</button>
+                                                <button onClick={() => setIsVaultUnlocked(false)} className="text-[7px] opacity-30 font-bold uppercase">Reset</button>
                                             </div>
                                         )}
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {activeTab === 'vault' && (
-                                <div className="animate-in space-y-6 h-full flex flex-col relative">
-                                    <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="lock" color={activeTheme.color} /> Bóveda Táctica</h2>
-                                    
-                                    {!isVaultUnlocked ? (
-                                        <div className="vault-lock-overlay rounded-[2.5rem]">
-                                            <div className="shake-icon-anim mb-6 text-white/50"><Icon name="cpu" className="w-20 h-20" /></div>
-                                            <h3 className="text-lg font-black italic uppercase mb-2">Protocolo Kinético</h3>
-                                            <p className="text-[10px] opacity-40 uppercase font-bold tracking-widest">Sacude el dispositivo para desbloquear el acceso</p>
-                                            <button onClick={() => setIsVaultUnlocked(true)} className="mt-8 text-[8px] font-black opacity-20 uppercase">Simular Movimiento (Dev)</button>
-                                        </div>
-                                    ) : (
-                                        <div className="master-card bg-gradient-to-br from-yellow-600/20 to-transparent flex-grow flex flex-col items-center justify-center min-h-[300px] border-yellow-500/30">
-                                            <div className="w-24 h-24 mb-6 bg-yellow-500/10 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(234,179,8,0.2)]">
-                                                <Icon name="roblox_verified" className="w-14 h-14" />
-                                            </div>
-                                            <h3 className="text-xl font-black italic uppercase mb-8">Estatus: Agente Elite</h3>
-                                            <button 
-                                                className="py-4 px-10 bg-yellow-500 text-black rounded-2xl font-black text-xs uppercase shadow-[0_0_30px_rgba(234,179,8,0.4)] active:scale-95 transition-transform"
-                                                onClick={() => { alert("Verificado reclamado correctamente."); }}
-                                            >
-                                                Reclamar Verificado
-                                            </button>
-                                            <button onClick={() => setIsVaultUnlocked(false)} className="mt-10 text-[9px] font-bold opacity-30 uppercase tracking-widest">Restablecer Bloqueo</button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {activeTab === 'identity' && (
-                                <div className="space-y-6">
-                                    <h2 className="text-2xl font-black italic uppercase flex items-center gap-3"><Icon name="id" color={activeTheme.color} /> Perfil</h2>
-                                    <div className={`master-card bg-gradient-to-br from-indigo-600 to-slate-950 min-h-[160px] flex flex-col justify-end`}>
-                                        <h3 className="text-2xl font-black italic uppercase tracking-tighter">{isOwner ? 'MUNEEB_ALY' : 'RECLUTA EDK'}</h3>
-                                        <p className="text-[9px] opacity-60 uppercase font-black mt-1">Status: En Línea</p>
+                                {activeTab === 'info' && (
+                                    <div className="module-scroll-area flex flex-col justify-center space-y-4 animate-in">
+                                        <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-[9px] opacity-40 uppercase">Diagonal</span><span className="text-[9px] font-mono">6.3"</span></div>
+                                        <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-[9px] opacity-40 uppercase">Symmetry</span><span className="text-[9px] font-mono text-green-400">ABSOLUTE</span></div>
+                                        <div className="flex justify-between pb-2"><span className="text-[9px] opacity-40 uppercase">Kernel</span><span className="text-[9px] font-mono">v5.8</span></div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+
+                                {activeTab === 'identity' && (
+                                    <div className="module-scroll-area flex flex-col justify-end animate-in">
+                                        <div className="bg-gradient-to-br from-indigo-900/40 to-black p-6 rounded-3xl border border-white/10">
+                                            <h3 className="text-xl font-black italic uppercase">{isOwner ? 'MUNEEB_ALY' : 'RECLUTA EDK'}</h3>
+                                            <p className="text-[8px] opacity-50 mt-1">Verified Unit Access</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </main>
 
-                    {/* NAV DOCK UNIFICADO PREMIUM */}
-                    <nav className="nav-dock">
-                        <button onClick={() => handleTabChange('home')} className={`nav-btn-wrapper ${activeTab === 'home' ? 'active' : ''}`}><Icon name="home" className="w-5 h-5" /></button>
-                        <button onClick={() => handleTabChange('ranking')} className={`nav-btn-wrapper ${activeTab === 'ranking' ? 'active' : ''}`}><Icon name="roblox_verified" className="w-6 h-6" /></button>
-                        <button onClick={() => handleTabChange(isOwner ? 'admin' : 'secure')} className={`nav-btn-wrapper ${isOwner ? 'master-active' : ''} ${(activeTab === 'secure' || activeTab === 'admin') ? 'active' : ''}`}><Icon name={isOwner ? "terminal" : "shield"} color="white" className="w-6 h-6" /></button>
-                        <button onClick={() => handleTabChange('vault')} className={`nav-btn-wrapper ${activeTab === 'vault' ? 'active' : ''}`}><Icon name="lock" className="w-5 h-5" /></button>
-                        <button onClick={() => handleTabChange('vision')} className={`nav-btn-wrapper ${activeTab === 'vision' ? 'active' : ''}`}><Icon name="camera" className="w-5 h-5" /></button>
-                        <button onClick={() => handleTabChange('identity')} className={`nav-btn-wrapper ${activeTab === 'identity' ? 'active' : ''}`}><Icon name="id" className="w-5 h-5" /></button>
+                    <nav className="nav-dock-container">
+                        <div className="nav-row">
+                            <button onClick={() => handleTabChange('notifs')} className={`nav-btn-wrapper ${activeTab === 'notifs' ? 'active' : ''}`}><Icon name="bell" /></button>
+                            <button onClick={() => handleTabChange('laser')} className={`nav-btn-wrapper ${activeTab === 'laser' ? 'active' : ''}`}><Icon name="pen" /></button>
+                            <button onClick={() => handleTabChange('light')} className={`nav-btn-wrapper ${activeTab === 'light' ? 'active' : ''}`}><Icon name="bolt" /></button>
+                            <button onClick={() => handleTabChange('rgb')} className={`nav-btn-wrapper ${activeTab === 'rgb' ? 'active' : ''}`}><Icon name="palette" /></button>
+                            <button onClick={() => handleTabChange('mockup')} className={`nav-btn-wrapper ${activeTab === 'mockup' ? 'active' : ''}`}><Icon name="creditCard" /></button>
+                            <button onClick={() => handleTabChange('info')} className={`nav-btn-wrapper ${activeTab === 'info' ? 'active' : ''}`}><Icon name="info" /></button>
+                        </div>
+                        <div className="nav-row">
+                            <button onClick={() => handleTabChange('home')} className={`nav-btn-wrapper ${activeTab === 'home' ? 'active' : ''}`}><Icon name="home" /></button>
+                            <button onClick={() => handleTabChange('ranking')} className={`nav-btn-wrapper ${activeTab === 'ranking' ? 'active' : ''}`}><Icon name="roblox_verified" /></button>
+                            <button onClick={() => handleTabChange(isOwner ? 'admin' : 'secure')} className={`nav-btn-wrapper master-btn ${isOwner ? 'master-active' : ''} ${(activeTab === 'secure' || activeTab === 'admin') ? 'active' : ''}`}><Icon name={isOwner ? "terminal" : "shield"} color="white" /></button>
+                            <button onClick={() => handleTabChange('vault')} className={`nav-btn-wrapper ${activeTab === 'vault' ? 'active' : ''}`}><Icon name="lock" /></button>
+                            <button onClick={() => handleTabChange('vision')} className={`nav-btn-wrapper ${activeTab === 'vision' ? 'active' : ''}`}><Icon name="camera" /></button>
+                            <button onClick={() => handleTabChange('identity')} className={`nav-btn-wrapper ${activeTab === 'identity' ? 'active' : ''}`}><Icon name="id" /></button>
+                        </div>
                     </nav>
                 </div>
             );
