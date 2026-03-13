@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v8.5 Ultra Resilience</title>
+    <title>EDK APP ULTRA Pro - v9.0 Final Resilience</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
@@ -94,7 +94,7 @@
         /* --- MÓDULO TÁCTICO UNIFICADO (420px height) --- */
         .tactical-module {
             width: 100%; height: 420px; 
-            background: rgba(0, 0, 0, 0.7); 
+            background: rgba(0, 0, 0, 0.75); 
             border: 1.5px solid var(--dynamic-rgb);
             box-shadow: 0 0 25px rgba(var(--rgb-values), 0.2), inset 0 0 15px rgba(var(--rgb-values), 0.05);
             border-radius: 2.2rem;
@@ -137,7 +137,7 @@
         .timer-display { font-family: 'JetBrains Mono', monospace; font-size: 2.8rem; font-weight: 800; color: var(--dynamic-rgb); text-shadow: 0 0 20px rgba(var(--rgb-values), 0.5); }
         .custom-msg-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; font-size: 10px; font-weight: bold; color: white; outline: none; margin-bottom: 12px; }
 
-        .tamper-alert { position: fixed; inset: 0; background: #7f1d1d; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .tamper-alert { position: fixed; inset: 0; background: #7f1d1d; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; font-family: 'Plus Jakarta Sans', sans-serif; }
         .vault-lock-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; z-index: 50; }
         .electric-laser { position: absolute; left: 0; width: 100%; height: 2px; background: var(--dynamic-rgb); box-shadow: 0 0 10px var(--dynamic-rgb); animation: scan-move 2s linear infinite; z-index: 2; }
         @keyframes scan-move { 0% { top: 0%; } 100% { top: 100%; } }
@@ -188,45 +188,19 @@
         };
 
         const App = () => {
-            // --- CORE INITIALIZATION ---
+            // --- FIREBASE CONFIG ---
+            const firebaseConfig = JSON.parse(__firebase_config);
+            const app = fb.initializeApp(firebaseConfig);
+            const auth = fb.getAuth(app);
+            const db = fb.getFirestore(app);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'edk-ultra-v90';
+
+            // --- ESTADOS CORE ---
             const [isBooted, setIsBooted] = useState(false);
             const [user, setUser] = useState(null);
-            const firebaseRefs = useRef({ db: null, auth: null, appId: 'edk-ultra-v85' });
-
-            useEffect(() => {
-                const boot = async () => {
-                    if (typeof fb === 'undefined') {
-                        setTimeout(boot, 100);
-                        return;
-                    }
-                    try {
-                        const config = JSON.parse(__firebase_config);
-                        const app = fb.initializeApp(config);
-                        firebaseRefs.current.auth = fb.getAuth(app);
-                        firebaseRefs.current.db = fb.getFirestore(app);
-                        firebaseRefs.current.appId = typeof __app_id !== 'undefined' ? __app_id : 'edk-ultra-v85';
-                        
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await fb.signInWithCustomToken(firebaseRefs.current.auth, __initial_auth_token);
-                        } else {
-                            await fb.signInAnonymously(firebaseRefs.current.auth);
-                        }
-                        
-                        fb.onAuthStateChanged(firebaseRefs.current.auth, (u) => {
-                            setUser(u);
-                            setIsBooted(true);
-                        });
-                    } catch (e) { 
-                        console.error("Kernel Error:", e); 
-                        setIsBooted(true); // Fallback render
-                    }
-                };
-                boot();
-            }, []);
-
-            // --- ESTADOS ---
             const [activeTab, setActiveTab] = useState('home');
             const [isOwner, setIsOwner] = useState(false);
+            const [isUnlocked, setIsUnlocked] = useState(false);
             const [isPulseActive, setIsPulseActive] = useState(false);
             const [dynamicColor, setDynamicColor] = useState(() => localStorage.getItem('edk_rgb') || '#00d2ff');
             const [engravedName, setEngravedName] = useState(() => localStorage.getItem('edk_laser') || 'AGENTE EDK');
@@ -235,7 +209,6 @@
             const [isLockedScreen, setIsLockedScreen] = useState(false);
             const [tamperDetected, setTamperDetected] = useState(false);
             const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
-            const [isUnlocked, setIsUnlocked] = useState(false);
             const [isScanning, setIsScanning] = useState(false);
             const [intrusions, setIntrusions] = useState([]);
             const [timeLeft, setTimeLeft] = useState(0);
@@ -244,7 +217,6 @@
             const [flashlightColor, setFlashlightColor] = useState('#ffffff');
             const [torchOn, setTorchOn] = useState(false);
             const [activeFilter, setActiveFilter] = useState('none');
-            const [cardMaterial, setCardMaterial] = useState('metal');
             const [currentTime, setCurrentTime] = useState(new Date());
 
             const qrRef = useRef(null);
@@ -252,89 +224,95 @@
             const scanTimerRef = useRef(null);
             const videoRef = useRef(null);
 
-            // --- MOTOR SÓNICO REBOUND (iPhone 15 Style) ---
+            // --- PROTOCOLO DE ARRANQUE (REGLA 3) ---
+            useEffect(() => {
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await fb.signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await fb.signInAnonymously(auth);
+                        }
+                    } catch (e) {
+                        console.error("Auth Failure:", e);
+                    }
+                };
+                initAuth();
+                const unsubscribe = fb.onAuthStateChanged(auth, (u) => {
+                    if (u) {
+                        setUser(u);
+                        setIsBooted(true);
+                    }
+                });
+                return () => unsubscribe();
+            }, []);
+
+            // --- LISTENERS (REGLA 2: No complex queries, filter in memory) ---
+            useEffect(() => {
+                if (!user) return;
+                const intrusionsCol = fb.collection(db, 'artifacts', appId, 'public', 'data', 'intrusions');
+                const unsubscribe = fb.onSnapshot(intrusionsCol, (snapshot) => {
+                    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setIntrusions(logs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)));
+                }, (error) => {
+                    console.error("Snapshot error:", error);
+                });
+                return () => unsubscribe();
+            }, [user]);
+
+            // --- AUDIO REBOUND (iPhone 15) ---
             const playReboundTone = () => {
                 if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.current.state === 'suspended') audioCtx.current.resume();
-                
-                const playNote = (freq, startTime, duration) => {
+                const now = audioCtx.current.currentTime;
+                const playN = (f, t, d) => {
                     const osc = audioCtx.current.createOscillator();
                     const gain = audioCtx.current.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, startTime);
-                    gain.gain.setValueAtTime(0, startTime);
-                    gain.gain.linearRampToValueAtTime(0.15, startTime + 0.02);
-                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.current.destination);
-                    osc.start(startTime);
-                    osc.stop(startTime + duration);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(f, t);
+                    gain.gain.setValueAtTime(0, t);
+                    gain.gain.linearRampToValueAtTime(0.2, t + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + d);
+                    osc.connect(gain); gain.connect(audioCtx.current.destination);
+                    osc.start(t); osc.stop(t + d);
                 };
-
-                const now = audioCtx.current.currentTime;
-                playNote(1046.50, now, 0.4); 
-                playNote(1318.51, now + 0.12, 0.5); 
+                playN(1046.50, now, 0.4); playN(1318.51, now + 0.12, 0.5);
             };
 
-            const playTacticalSound = (freq = 200, duration = 0.1) => {
-                if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.current.state === 'suspended') audioCtx.current.resume();
-                const osc = audioCtx.current.createOscillator();
-                const gain = audioCtx.current.createGain();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(freq, audioCtx.current.currentTime);
-                gain.gain.setValueAtTime(0.05, audioCtx.current.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.current.currentTime + duration);
-                osc.connect(gain); gain.connect(audioCtx.current.destination);
-                osc.start(); osc.stop(audioCtx.current.currentTime + duration);
-            };
-
-            const triggerOwnerNotification = (title, body) => {
+            const triggerAlert = (title, body) => {
                 if (Notification.permission === "granted") {
                     new Notification(title.toUpperCase(), { body, icon: "edkultra.svg" });
                 }
                 playReboundTone(); 
             };
 
-            const logIntrusion = async (type) => {
-                if (!user || isOwner || !firebaseRefs.current.db) return;
+            const logBreach = async (type) => {
+                if (isOwner || !user) return;
                 try {
-                    await fb.addDoc(fb.collection(firebaseRefs.current.db, 'artifacts', firebaseRefs.current.appId, 'public', 'data', 'intrusions'), {
-                        type,
-                        timestamp: fb.serverTimestamp(),
-                        device: navigator.userAgent.split(')')[0] + ')',
+                    await fb.addDoc(fb.collection(db, 'artifacts', appId, 'public', 'data', 'intrusions'), {
+                        type, timestamp: fb.serverTimestamp(), device: navigator.userAgent
                     });
-                    triggerOwnerNotification("BREACH DETECTED", `Amenaza de sistema: ${type}`);
+                    triggerAlert("SENTINEL BREACH", `Intento de acceso: ${type}`);
                     setTamperDetected(true);
                 } catch (e) { console.error(e); }
             };
 
-            useEffect(() => {
-                if (!user || !firebaseRefs.current.db) return;
-                const q = fb.collection(firebaseRefs.current.db, 'artifacts', firebaseRefs.current.appId, 'public', 'data', 'intrusions');
-                const unsubscribe = fb.onSnapshot(fb.query(q), (snapshot) => {
-                    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setIntrusions(logs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)));
-                });
-                return () => unsubscribe();
-            }, [user]);
-
+            // --- LISTENERS DE INTERCEPCIÓN ---
             useEffect(() => {
                 const handleKey = (e) => {
                     if (isOwner) return;
-                    const isForbidden = (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)));
-                    if (isForbidden) { e.preventDefault(); logIntrusion("RECURSOS_PROTEGIDOS"); }
+                    const forbidden = (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)));
+                    if (forbidden) { e.preventDefault(); logBreach("INSPECTION_ATTEMPT"); }
                 };
                 window.addEventListener('keydown', handleKey);
-                document.addEventListener('contextmenu', (e) => { if (!isOwner) { e.preventDefault(); logIntrusion("CLIC_DERECHO"); } });
-                const clock = setInterval(() => setCurrentTime(new Date()), 1000);
-                return () => { window.removeEventListener('keydown', handleKey); clearInterval(clock); };
-            }, [user, isOwner]);
+                document.addEventListener('contextmenu', (e) => { if (!isOwner) { e.preventDefault(); logBreach("RIGHT_CLICK"); } });
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => { window.removeEventListener('keydown', handleKey); clearInterval(timer); };
+            }, [isOwner, user]);
 
             useEffect(() => {
                 const handleMotion = (e) => {
                     if (e.accelerationIncludingGravity && Math.sqrt(e.accelerationIncludingGravity.x**2 + e.accelerationIncludingGravity.y**2) > 28) {
-                        if (activeTab === 'vault') { playTacticalSound(800, 0.3); setIsVaultUnlocked(true); }
+                        if (activeTab === 'vault') { setIsVaultUnlocked(true); }
                     }
                 };
                 window.addEventListener('devicemotion', handleMotion);
@@ -347,9 +325,9 @@
                     return () => clearInterval(t);
                 } else if (timeLeft === 0 && timerActive) {
                     setTimerActive(false);
-                    triggerOwnerNotification("SE ACABÓ EL TIEMPO", timerMsg);
+                    triggerAlert("TIEMPO FINALIZADO", timerMsg);
                 }
-            }, [timerActive, timeLeft, timerMsg]);
+            }, [timerActive, timeLeft]);
 
             useEffect(() => {
                 if (activeTab === 'home' && qrRef.current && !showLoginModal) {
@@ -377,64 +355,49 @@
                     if (track.getCapabilities().torch) {
                         await track.applyConstraints({ advanced: [{ torch: !torchOn }] });
                         setTorchOn(!torchOn);
-                        playTacticalSound(800, 0.1);
                     }
                 } catch (e) { console.error(e); }
             };
 
-            if (!isBooted) {
-                return (
-                    <div className="boot-screen">
-                        <div className="animate-pulse mb-4"><img src="edkultra.svg" className="w-16 h-16" alt="L" /></div>
-                        <p className="text-[10px] tracking-widest uppercase">Booting Kernel v8.5...</p>
-                    </div>
-                );
-            }
+            if (!isBooted) return <div className="boot-screen"><img src="edkultra.svg" className="w-16 h-16 animate-pulse" /><p className="text-[10px] mt-4 uppercase">Sincronizando Kernel v9.0...</p></div>;
 
-            if (tamperDetected) {
-                return (
-                    <div className="tamper-alert font-black">
-                        <Icon name="shieldAlert" className="w-20 h-20 mb-6 animate-bounce text-white" />
-                        <h1 className="text-3xl uppercase italic text-white px-4 text-center">BREACH DETECTED</h1>
-                        <p className="text-[8px] text-white/50 uppercase mt-4 text-center px-8">Owner Device Notified via Rebound Proto.</p>
-                        <button onClick={() => setTamperDetected(false)} className="mt-12 px-10 py-4 bg-white text-red-800 rounded-2xl font-black uppercase text-xs">Reset</button>
-                    </div>
-                );
-            }
+            if (tamperDetected) return (
+                <div className="tamper-alert">
+                    <Icon name="shieldAlert" className="w-20 h-20 mb-6 animate-bounce" />
+                    <h1 className="text-4xl font-black italic uppercase">BREACH DETECTED</h1>
+                    <p className="text-[8px] opacity-60 mt-4 uppercase tracking-[0.2em]">Owner Notified // Sentinel Lock Active</p>
+                    <button onClick={() => setTamperDetected(false)} className="mt-12 px-8 py-3 bg-white text-red-900 rounded-xl font-black uppercase text-xs">Reset kernel</button>
+                </div>
+            );
 
-            if (showLoginModal) {
-                return (
-                    <div className="app-container mx-auto">
-                        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-3xl">
-                            <div className="tactical-module w-full max-w-[320px] h-auto p-8 text-center space-y-6 border-white/20 animate-in">
-                                <img src="edkultra.svg" className="w-16 h-16 mx-auto" alt="Logo" />
-                                <h2 className="text-xl font-black uppercase italic tracking-tighter">Terminal EDK</h2>
-                                <input type="password" placeholder="Passphrase..." value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 font-mono text-center text-white outline-none focus:border-blue-500" />
-                                <button onClick={() => { if(passInput === '1234') setIsOwner(true); setShowLoginModal(false); }} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Validar</button>
-                            </div>
+            if (showLoginModal) return (
+                <div className="app-container mx-auto">
+                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-3xl">
+                        <div className="tactical-module w-full max-w-[320px] h-auto p-8 text-center space-y-6 border-white/20 animate-in">
+                            <img src="edkultra.svg" className="w-16 h-16 mx-auto" />
+                            <h2 className="text-xl font-black uppercase italic tracking-tighter">Terminal Login</h2>
+                            <input type="password" placeholder="Passphrase..." value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-center font-mono outline-none focus:border-blue-500" />
+                            <button onClick={() => { if(passInput === '1234') setIsOwner(true); setShowLoginModal(false); if(Notification.permission === "default") Notification.requestPermission(); }} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Enter</button>
                         </div>
                     </div>
-                );
-            }
+                </div>
+            );
 
             return (
                 <div className={`app-container animate-in no-select ${isPulseActive ? 'border-pulse-active' : ''}`}>
-                    <div className="laser-engraving-label">{engravedName} // RESILIENCE-V8.5</div>
+                    <div className="laser-engraving-label">{engravedName} // ALPHA-SYNC-V9.0</div>
 
                     {isLockedScreen && (
-                        <div className="lock-screen-overlay" onClick={() => { setIsLockedScreen(false); playTacticalSound(300, 0.2); }}>
+                        <div className="lock-screen-overlay" onClick={() => { setIsLockedScreen(false); }}>
                             <h2 className="text-5xl font-black italic tracking-tighter mb-2">{currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</h2>
-                            <p className="text-[10px] font-bold uppercase opacity-40 mb-12">EDK Satellite Protection</p>
-                            <div className="mt-auto mb-16 animate-pulse"><Icon name="fingerprint" className="w-12 h-12 opacity-20" /><p className="text-[7px] font-black uppercase mt-2">Biometría</p></div>
+                            <p className="text-[10px] font-bold uppercase opacity-40 mb-12">EDK Apex Protection</p>
+                            <div className="mt-auto mb-16 animate-pulse"><Icon name="fingerprint" className="w-12 h-12 opacity-20" /><p className="text-[7px] font-black uppercase mt-2">Identificar</p></div>
                         </div>
                     )}
 
                     <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5 flex-shrink-0">
-                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Auto Detect Chasis</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => setIsLockedScreen(true)} className="opacity-30 active:scale-95"><Icon name="lock" className="w-4 h-4" /></button>
-                            <img src="edkultra.svg" className="w-8 h-8 rounded-lg shadow-xl" style={{ filter: `drop-shadow(0 0 10px ${dynamicColor})` }} alt="Logo" />
-                        </div>
+                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Total Density Restore</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
+                        <img src="edkultra.svg" className="w-8 h-8 rounded-lg shadow-xl" style={{ filter: `drop-shadow(0 0 10px ${dynamicColor})` }} />
                     </header>
 
                     <main className="main-scroll-viewport">
@@ -449,43 +412,44 @@
                                     <div className="module-scroll-area flex flex-col items-center space-y-6 animate-in">
                                         <div className="bg-gradient-to-br from-slate-900 to-black p-8 rounded-3xl border border-white/5 shadow-xl w-full text-center">
                                             <h2 className="text-2xl font-black italic uppercase leading-tight">SYSTEM <br/> <span style={{ color: dynamicColor }}>READY</span></h2>
-                                            <p className="text-[9px] opacity-40 uppercase font-mono mt-2">{currentTime.toLocaleTimeString()} // {currentTime.toLocaleDateString()}</p>
+                                            <p className="text-[9px] opacity-40 font-mono mt-2">{currentTime.toLocaleTimeString()}</p>
                                         </div>
                                         <div className="p-2 bg-white rounded-xl shadow-xl mx-auto"><div id="share-qr" ref={qrRef}></div></div>
-                                        <div className="tactical-row"><Icon name="activity" className="text-green-400" /> <span className="text-[9px] font-bold uppercase">Estado: Kernel Sincronizado</span></div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'ranking' && (
-                                    <div className="module-scroll-area animate-in">
-                                        <div className="space-y-1">
-                                            {[1,2,3,5,10,15,20,25,30].map(i => (
-                                                <div key={i} className="tactical-row">
-                                                    <div className="w-8 h-8 bg-white/10 rounded-full border border-white/10 overflow-hidden"><img src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${i*1000}&size=150x150&format=Png`} alt="A" /></div>
-                                                    <div className="flex-1 text-xs font-bold truncate">Elite_Agent_{i}</div>
-                                                    <span className="text-[10px] font-black opacity-20">#{i}</span>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <div className="tactical-row"><Icon name="activity" className="text-green-400" /> <span className="text-[9px] font-bold uppercase">Shield: Sentinel v9.0 Active</span></div>
                                     </div>
                                 )}
 
                                 {activeTab === 'sentinel' && (
                                     <div className="module-scroll-area space-y-4 animate-in">
                                         <div className="bg-blue-500/10 p-4 rounded-2xl border border-blue-500/20 mb-4 text-center">
-                                            <h3 className="text-xs font-black uppercase text-blue-400">Amenazas Detectadas</h3>
+                                            <h3 className="text-xs font-black uppercase text-blue-400">Security Monitoring</h3>
+                                            <p className="text-[6px] opacity-40 mt-1 uppercase">Historial de Amenazas Real</p>
                                         </div>
-                                        {intrusions.length === 0 ? (
-                                            <div className="tactical-row justify-center opacity-20"><span className="text-[8px] uppercase font-black italic">Monitorizando recursos...</span></div>
-                                        ) : intrusions.map((log) => (
-                                            <div key={log.id} className="tactical-row border-l-2 border-red-500 bg-red-500/5">
-                                                <div className="flex-1">
-                                                    <p className="text-[9px] font-black uppercase text-red-400">{log.type}</p>
-                                                    <p className="text-[6px] opacity-50 truncate">{log.device}</p>
+                                        {intrusions.length === 0 ? <div className="tactical-row justify-center opacity-20"><span className="text-[8px] uppercase">Monitorizando recursos...</span></div> :
+                                            intrusions.map(log => (
+                                                <div key={log.id} className="tactical-row border-l-2 border-red-500 bg-red-500/5 animate-pulse">
+                                                    <div className="flex-1">
+                                                        <p className="text-[9px] font-black uppercase text-red-400">{log.type}</p>
+                                                        <p className="text-[6px] opacity-50 truncate">{log.device}</p>
+                                                    </div>
+                                                    <span className="text-[8px] font-mono opacity-40">{log.timestamp?.seconds ? new Date(log.timestamp.seconds * 1000).toLocaleTimeString() : '...'}</span>
                                                 </div>
-                                                <span className="text-[8px] font-mono opacity-40">{log.timestamp?.seconds ? new Date(log.timestamp.seconds * 1000).toLocaleTimeString() : '...'}</span>
-                                            </div>
-                                        ))}
+                                            ))
+                                        }
+                                    </div>
+                                )}
+
+                                {activeTab === 'ranking' && (
+                                    <div className="module-scroll-area animate-in">
+                                        <div className="space-y-1">
+                                            {[1,2,3,5,10,15,20,25].map(i => (
+                                                <div key={i} className="tactical-row">
+                                                    <div className="w-8 h-8 bg-white/10 rounded-full overflow-hidden"><img src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${i*1000}&size=150x150&format=Png`} /></div>
+                                                    <div className="flex-1 text-xs font-bold">Elite_Agent_{i}</div>
+                                                    <span className="text-[10px] font-black opacity-20">#{i}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
@@ -494,14 +458,17 @@
                                         {!isVaultUnlocked ? (
                                             <div className="vault-lock-overlay">
                                                 <Icon name="cpu" className="w-12 h-12 mb-4 text-white/40 animate-pulse" />
-                                                <h3 className="text-sm font-black uppercase italic mb-2 text-center">Protocolo Kinético</h3>
+                                                <h3 className="text-sm font-black uppercase italic">Protocolo Kinético</h3>
                                                 <p className="text-[8px] opacity-40 uppercase font-black text-center">Agita el terminal para abrir</p>
                                             </div>
                                         ) : (
                                             <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 text-center animate-in">
-                                                <div className="tactical-row justify-center border-none bg-transparent"><Icon name="roblox_verified" className="w-16 h-16" color="#f9d423" /></div>
+                                                <Icon name="roblox_verified" className="w-16 h-16" color="#f9d423" />
                                                 <h3 className="text-lg font-black italic uppercase text-yellow-400">Bóveda Abierta</h3>
-                                                <button className="py-4 px-10 bg-yellow-500 text-black rounded-xl font-black text-[9px] uppercase shadow-xl w-full">Reclamar Verificado</button>
+                                                <div className="space-y-2 w-full">
+                                                    <div className="tactical-row bg-yellow-500/10 border-yellow-500/20"><span className="text-[8px] font-black uppercase">Código Maestro: 0X-KINETIC</span></div>
+                                                    <button className="py-4 px-10 bg-yellow-500 text-black rounded-xl font-black text-[9px] uppercase shadow-xl w-full">Reclamar Verificado</button>
+                                                </div>
                                                 <button onClick={() => setIsVaultUnlocked(false)} className="text-[7px] opacity-30 font-bold uppercase">Cerrar</button>
                                             </div>
                                         )}
@@ -529,15 +496,16 @@
                                     <div className="module-scroll-area space-y-2 animate-in flex flex-col justify-center">
                                         <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Diagonal</span><span className="text-[10px] font-mono text-blue-400">6.3" ADAPT</span></div>
                                         <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Simetría</span><span className="text-[10px] font-mono text-green-400">ABSOLUTA</span></div>
-                                        <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Kernel</span><span className="text-[10px] font-mono text-yellow-400">v8.5 MAESTRO</span></div>
+                                        <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Kernel</span><span className="text-[10px] font-mono text-yellow-400">v9.0 MAESTRO</span></div>
                                         <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Sound Engine</span><span className="text-[10px] font-mono text-cyan-400">iOS_REBOUND</span></div>
+                                        <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Database</span><span className="text-[10px] font-mono text-green-400">CONNECTED</span></div>
                                     </div>
                                 )}
 
                                 {activeTab === 'identity' && (
                                     <div className="module-scroll-area flex flex-col justify-center items-center space-y-6 animate-in">
                                         <div className="vip-card-mockup material-metal"><div className="card-shine"></div><img src="edkultra.svg" className="w-8 h-8 opacity-40" alt="L" /><div className="mt-auto"><h3 className="text-sm font-black italic uppercase tracking-tighter">{engravedName}</h3><Icon name="roblox_verified" className="w-6 h-6 ml-auto" /></div></div>
-                                        <div className="tactical-row justify-center"><p className="text-[9px] font-black uppercase opacity-50">Acceso: Agente Elite</p></div>
+                                        <div className="tactical-row justify-center"><p className="text-[9px] font-black uppercase opacity-50">Acceso: Agente Verificado</p></div>
                                     </div>
                                 )}
 
@@ -546,33 +514,8 @@
                                         <div className="timer-display mb-2">{Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}</div>
                                         <input type="text" value={timerMsg} onChange={(e) => setTimerMsg(e.target.value)} placeholder="MENSAJE PERSONALIZADO..." className="custom-msg-input text-center" />
                                         <div className="grid grid-cols-2 gap-2 w-full">
-                                            {[5, 30, 60, 300].map(s => (<button key={s} onClick={() => { if(Notification.permission==="default") Notification.requestPermission(); setTimeLeft(s); setTimerActive(true); playTacticalSound(400,0.1); }} className="tactical-row justify-center py-4 bg-white/5 border border-white/10 active:bg-white/20"><span className="text-[10px] font-bold uppercase">{s<60?`${s} SEG`:`${s/60} MIN`}</span></button>))}
+                                            {[5, 30, 60, 300].map(s => (<button key={s} onClick={() => { setTimeLeft(s); setTimerActive(true); }} className="tactical-row justify-center py-4 bg-white/5 border border-white/10 active:bg-white/20"><span className="text-[10px] font-bold uppercase">{s<60?`${s} SEG`:`${s/60} MIN`}</span></button>))}
                                         </div>
-                                        <button onClick={() => { setTimerActive(false); setTimeLeft(0); }} className="w-full py-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl font-black uppercase text-[9px]">Cancelar</button>
-                                    </div>
-                                )}
-
-                                {activeTab === 'light' && (
-                                    <div className="module-scroll-area flex flex-col items-center justify-center space-y-8 animate-in text-center">
-                                        <div onClick={togglePhysicalTorch} className={`w-20 h-20 rounded-full border-2 border-white flex items-center justify-center cursor-pointer ${torchOn ? 'bg-white text-black shadow-[0_0_40px_white]' : ''}`}><Icon name="bolt" className="w-10 h-10" /></div>
-                                        <div className="flex gap-4">
-                                            {['#ffffff', '#ff0000', '#00ff00', '#0000ff'].map(c => (<button key={c} onClick={() => { setFlashlightColor(c); playTacticalSound(400, 0.05); }} className="w-8 h-8 rounded-full border border-white/20" style={{ backgroundColor: c }}></button>))}
-                                        </div>
-                                        <div className="w-full h-10 rounded-lg" style={{ backgroundColor: flashlightColor }}></div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'laser' && (
-                                    <div className="module-scroll-area flex flex-col justify-center space-y-6 animate-in text-center">
-                                        <input type="text" value={engravedName} onChange={(e) => setEngravedName(e.target.value.toUpperCase().slice(0, 15))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 font-mono text-center text-sm text-white outline-none focus:border-blue-500" />
-                                        <div className="tactical-row justify-center"><p className="text-[7px] text-center opacity-40 uppercase font-black">Chasis grabado correctamente.</p></div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'rgb' && (
-                                    <div className="module-scroll-area flex flex-col items-center justify-center space-y-8 animate-in text-center">
-                                        <input type="color" value={dynamicColor} onChange={(e) => setDynamicColor(e.target.value)} className="w-full h-12 bg-transparent cursor-pointer" />
-                                        <div className="flex justify-between w-full px-4">{['#00d2ff', '#ff4b2b', '#f9d423', '#00ff41'].map(c => (<button key={c} onClick={() => setDynamicColor(c)} className="w-8 h-8 rounded-full border border-white/20" style={{ backgroundColor: c }}></button>))}</div>
                                     </div>
                                 )}
                             </div>
