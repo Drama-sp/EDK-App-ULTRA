@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EDK APP ULTRA Pro - v6.4 Sentinel Core Fixed</title>
+    <title>EDK APP ULTRA Pro - v7.0 Fluid Symmetry</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
@@ -36,6 +36,11 @@
             --rgb-values: 0, 210, 255;
         }
 
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: #000; 
@@ -45,23 +50,23 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            height: 100dvh;
             width: 100vw;
         }
 
-        /* --- CHASIS FÍSICO 6,3" (395x854) --- */
+        /* --- CHASIS FLUIDO ADAPTATIVO (AUTODETECT) --- */
         .app-container { 
             position: relative; 
-            width: 395px; 
-            height: 854px; 
+            width: 100vw;
+            height: 100dvh;
             background-color: #020617; 
             overflow: hidden; 
             display: flex; 
             flex-direction: column; 
-            box-sizing: border-box;
             
-            border: 10px solid transparent;
-            border-radius: 3.2rem;
+            /* Bordes Dinámicos: Se pegan al borde del móvil */
+            border: 8px solid transparent;
+            border-radius: 2.2rem;
             background-image: linear-gradient(#020617, #020617), 
                               linear-gradient(var(--gloss-angle), 
                                 #8a6d3b 0%, 
@@ -71,14 +76,24 @@
                                 #8a6d3b 100%);
             background-origin: border-box;
             background-clip: padding-box, border-box;
-            box-shadow: 0 0 50px rgba(0,0,0,1);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
             transition: background-image 0.5s ease-out;
         }
 
+        /* En resoluciones de escritorio, mantenemos un aspecto de móvil para pruebas */
+        @media (min-width: 1024px) {
+            .app-container {
+                max-width: 395px;
+                max-height: 854px;
+                border-width: 10px;
+                border-radius: 3.5rem;
+            }
+        }
+
         @keyframes border-glow-pulse {
-            0% { filter: brightness(1); box-shadow: 0 0 20px rgba(var(--rgb-values), 0.2); }
-            30% { filter: brightness(2); box-shadow: 0 0 60px rgba(var(--rgb-values), 0.8); }
-            100% { filter: brightness(1); box-shadow: 0 0 20px rgba(var(--rgb-values), 0.2); }
+            0% { filter: brightness(1); box-shadow: 0 0 10px rgba(var(--rgb-values), 0.2); }
+            30% { filter: brightness(2.5); box-shadow: 0 0 40px rgba(var(--rgb-values), 0.8); }
+            100% { filter: brightness(1); box-shadow: 0 0 10px rgba(var(--rgb-values), 0.2); }
         }
 
         .border-pulse-active {
@@ -93,19 +108,19 @@
 
         .laser-engraving-label {
             position: absolute; left: -4px; top: 50%; transform: translateY(-50%) rotate(-90deg);
-            font-family: 'JetBrains Mono', monospace; font-size: 7px; font-weight: 800;
+            font-family: 'JetBrains Mono', monospace; font-size: 6px; font-weight: 800;
             text-transform: uppercase; letter-spacing: 2px; color: rgba(0, 0, 0, 0.3);
             text-shadow: 0.5px 0.5px 0px rgba(255, 255, 255, 0.15); pointer-events: none; z-index: 5;
             white-space: nowrap;
         }
 
-        /* --- MÓDULO TÁCTICO UNIFICADO (420px) --- */
+        /* --- MÓDULO TÁCTICO UNIFICADO (HABILITACIÓN DE SCROLL) --- */
         .tactical-module {
             width: 100%;
             height: 420px; 
             background: rgba(0, 0, 0, 0.6); 
             border: 1.5px solid var(--dynamic-rgb);
-            box-shadow: 0 0 25px rgba(var(--rgb-values), 0.15), inset 0 0 15px rgba(var(--rgb-values), 0.05);
+            box-shadow: 0 0 20px rgba(var(--rgb-values), 0.15), inset 0 0 10px rgba(var(--rgb-values), 0.05);
             border-radius: 2.2rem;
             position: relative;
             overflow: hidden;
@@ -119,74 +134,49 @@
             overflow-y: auto;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
-            padding: 1.5rem;
+            padding: 1.25rem;
             touch-action: pan-y;
         }
         .module-scroll-area::-webkit-scrollbar { display: none; }
 
-        /* --- LOCK SCREEN --- */
+        .main-scroll-viewport { flex: 1; overflow: hidden; position: relative; z-index: 10; display: flex; flex-direction: column; }
+        .content-padding { flex: 1; padding: 1.25rem; display: flex; flex-direction: column; justify-content: center; }
+
         .lock-screen-overlay {
-            position: absolute; inset: 0; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(25px);
+            position: absolute; inset: 0; background: rgba(2, 6, 23, 0.98); backdrop-filter: blur(40px);
             z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            animation: fadeIn 0.5s ease-out;
         }
-
-        .lock-notif {
-            width: 90%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 1.2rem; padding: 12px 16px; margin-top: 20px;
-            animation: slideInUp 0.5s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-        }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideInUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* --- OTROS --- */
-        .main-scroll-viewport { flex: 1; overflow: hidden; position: relative; z-index: 10; }
-        .content-padding { height: 100%; padding: 0 1.25rem; display: flex; flex-direction: column; justify-content: center; }
 
         .nav-dock-container {
             position: absolute; bottom: 0; width: 100%;
-            background: linear-gradient(to top, #020617 92%, transparent);
-            padding: 10px 0 25px 0; z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
+            background: linear-gradient(to top, #020617 95%, transparent);
+            padding: 8px 0 24px 0; z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
         }
-        .nav-row { display: flex; justify-content: space-around; width: 100%; padding: 0 1rem; }
+        .nav-row { display: flex; justify-content: space-around; width: 100%; padding: 0 0.5rem; }
         
         .nav-btn-wrapper {
             background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(35px); border-radius: 1.1rem; width: 42px; height: 42px;
+            backdrop-filter: blur(35px); border-radius: 1.1rem; width: 40px; height: 40px;
             display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;
         }
-        .nav-btn-wrapper.active { background: white; transform: translateY(-5px) scale(1.1); box-shadow: 0 0 20px var(--dynamic-rgb); }
+        .nav-btn-wrapper.active { background: white; transform: translateY(-3px) scale(1.1); box-shadow: 0 0 15px var(--dynamic-rgb); }
         .nav-btn-wrapper.active svg { stroke: black; fill: transparent; }
 
-        .camera-feed { width: 100%; height: 100%; object-fit: cover; }
+        .tactical-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.02); border-radius: 1rem; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 8px; width: 100%; }
         .ranking-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 1rem; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 6px; }
         
-        .tamper-alert { position: fixed; inset: 0; background: rgba(127, 29, 29, 0.98); backdrop-filter: blur(25px); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; animation: pulse-red-bg 1s infinite alternate; }
-        @keyframes pulse-red-bg { from { background: rgba(127, 29, 29, 0.98); } to { background: rgba(185, 28, 28, 0.98); } }
-
-        .filter-button { padding: 5px 12px; border-radius: 8px; font-size: 7px; font-weight: 900; text-transform: uppercase; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
-        .filter-button.active { background: var(--dynamic-rgb); color: #000; box-shadow: 0 0 8px var(--dynamic-rgb); }
-
-        /* VIP Card Mockup */
-        .vip-card-mockup {
-            width: 100%; aspect-ratio: 1.58/1; border-radius: 1.4rem; position: relative; overflow: hidden;
-            display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.8);
-        }
-        .material-pvc { background: linear-gradient(135deg, #0f172a 0%, #000 100%); border: 1px solid rgba(255,255,255,0.05); }
+        .vip-card-mockup { width: 100%; aspect-ratio: 1.58/1; border-radius: 1.4rem; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 1.25rem; box-shadow: 0 15px 30px rgba(0,0,0,0.8); }
         .material-metal { background: linear-gradient(135deg, #1f2937 0%, #000 100%); border: 1px solid rgba(255,255,255,0.2); }
         .card-shine { position: absolute; inset: -100%; background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%); animation: card-glide 5s infinite linear; }
         @keyframes card-glide { from { transform: translateX(-30%); } to { transform: translateX(30%); } }
 
+        .tamper-alert { position: fixed; inset: 0; background: rgba(127, 29, 29, 1); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .vault-lock-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; z-index: 50; }
-        .progress-ring-circle { stroke: var(--dynamic-rgb); stroke-width: 4; fill: transparent; stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset 2s linear; }
-        .scanning .progress-ring-circle { stroke-dashoffset: 0; }
         .electric-laser { position: absolute; left: 0; width: 100%; height: 2px; background: var(--dynamic-rgb); box-shadow: 0 0 10px var(--dynamic-rgb); animation: scan-move 2s linear infinite; z-index: 2; }
         @keyframes scan-move { 0% { top: 0%; } 100% { top: 100%; } }
     </style>
 </head>
-<body id="app-body">
+<body>
     <svg style="position: absolute; width: 0; height: 0;">
         <filter id="edk-neon-filter">
             <feConvolveMatrix kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1" />
@@ -216,6 +206,7 @@
                 creditCard: <path d="M2 5h20v14H2zM2 10h20" />,
                 bolt: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />,
                 shieldAlert: <React.Fragment><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></React.Fragment>,
+                activity: <path d="M22 12h-4l-3 9L9 3l-3 9H2" />,
                 roblox_verified: <React.Fragment>
                     <path d="M4.332 7.002L13.332 3.002C14.444 2.508 15.753 3.004 16.257 4.11L20.257 13.11C20.761 14.216 20.265 15.525 19.159 16.029L10.159 20.029C9.053 20.533 7.744 20.037 7.24 18.931L3.24 9.931C2.736 8.825 3.232 7.516 4.332 7.002Z" fill="#0084ff" />
                     <path d="M8.5 12L10.5 14L15.5 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -228,23 +219,25 @@
             const [activeTab, setActiveTab] = useState('home');
             const [isBreaching, setIsBreaching] = useState(false);
             const [isPulseActive, setIsPulseActive] = useState(false);
-            const [dynamicColor, setDynamicColor] = useState(() => localStorage.getItem('edk_dynamic_rgb') || '#00d2ff');
-            const [engravedName, setEngravedName] = useState(() => localStorage.getItem('edk_engraving') || 'AGENTE EDK');
+            const [dynamicColor, setDynamicColor] = useState(() => localStorage.getItem('dynamic_rgb') || '#00d2ff');
+            const [engravedName, setEngravedName] = useState(() => localStorage.getItem('engraving') || 'AGENTE EDK');
             const [isOwner, setIsOwner] = useState(false);
             const [showLoginModal, setShowLoginModal] = useState(true);
             const [passInput, setPassInput] = useState('');
             const [isLockedScreen, setIsLockedScreen] = useState(false);
             const [tamperDetected, setTamperDetected] = useState(false);
             const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
+            const [isUnlocked, setIsUnlocked] = useState(false); // FIX: Restored missing state
             const [torchOn, setTorchOn] = useState(false);
             const [flashlightColor, setFlashlightColor] = useState('#ffffff');
             const [activeFilter, setActiveFilter] = useState('none');
             const [cardMaterial, setCardMaterial] = useState('metal');
             const [currentTime, setCurrentTime] = useState(new Date());
+            const [isScanning, setIsScanning] = useState(false);
 
             const audioCtx = useRef(null);
-            const videoRef = useRef(null);
             const qrRef = useRef(null);
+            const scanTimerRef = useRef(null);
 
             const playTacticalSound = (freq = 200, duration = 0.1) => {
                 if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -263,12 +256,11 @@
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                     const track = stream.getVideoTracks()[0];
-                    const caps = track.getCapabilities();
-                    if (caps.torch) {
+                    if (track.getCapabilities().torch) {
                         await track.applyConstraints({ advanced: [{ torch: !torchOn }] });
                         setTorchOn(!torchOn);
                         playTacticalSound(800, 0.1);
-                    } else { alert("Hardware de linterna no detectado."); }
+                    }
                 } catch (e) { console.error(e); }
             };
 
@@ -293,7 +285,7 @@
                 };
                 const handleKey = (e) => {
                     if (!isOwner && !showLoginModal) {
-                        const isForbidden = (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85));
+                        const isForbidden = (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)));
                         if (isForbidden) setTamperDetected(true);
                     }
                 };
@@ -320,21 +312,9 @@
             useEffect(() => {
                 if (activeTab === 'home' && qrRef.current && !showLoginModal && !isLockedScreen) {
                     qrRef.current.innerHTML = "";
-                    new QRCode(qrRef.current, { text: window.location.href, width: 140, height: 140 });
+                    new QRCode(qrRef.current, { text: window.location.href, width: 130, height: 130 });
                 }
             }, [activeTab, showLoginModal, isLockedScreen]);
-
-            const formatTime = () => {
-                const h = currentTime.getHours().toString().padStart(2, '0');
-                const m = currentTime.getMinutes().toString().padStart(2, '0');
-                return `${h}:${m}`;
-            };
-
-            const formatDate = () => {
-                const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                return `${days[currentTime.getDay()]}, ${currentTime.getDate()} de ${months[currentTime.getMonth()]}`;
-            };
 
             const handleTabChange = (tab) => {
                 if (tab === activeTab) return;
@@ -345,25 +325,29 @@
                 setTimeout(() => setIsPulseActive(false), 700);
             };
 
+            const formatTime = () => {
+                const h = currentTime.getHours().toString().padStart(2, '0');
+                const m = currentTime.getMinutes().toString().padStart(2, '0');
+                return `${h}:${m}`;
+            };
+
+            const formatDate = () => {
+                const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Sep', 'Oct', 'Nov', 'Dic'];
+                return `${days[currentTime.getDay()]}, ${currentTime.getDate()} ${months[currentTime.getMonth()]}`;
+            };
+
             const topVerified = [
                 { id: 1, name: "Roblox", uid: "1" }, { id: 2, name: "Builderman", uid: "16" }, { id: 26, name: "MiniToon", uid: "13614532" },
                 { id: 31, name: "muneeb", uid: "33458739" }, { id: 50, name: "manato48", uid: "33333333" },
-                ...Array.from({ length: 15 }, (_, i) => ({ id: i+100, name: `Agent_Elite_${i+10}`, uid: "1" }))
+                ...Array.from({ length: 25 }, (_, i) => ({ id: i+100, name: `Agent_Elite_${i+10}`, uid: "1" }))
             ];
-
-            const sectionTitles = {
-                home: "Symmetry Prime", ranking: "Elite Ranking", notifs: "Notificaciones",
-                laser: "Grabado Láser", rgb: "Iluminación RGB", mockup: "VIP Mockup",
-                vision: "Visión EDK", vault: "Bóveda Táctica", secure: "Seguridad",
-                admin: "Administración", info: "Sistema", identity: "Perfil",
-                light: "Linterna", sentinel: "Sentinel Hub"
-            };
 
             if (tamperDetected) {
                 return (
-                    <div className="tamper-alert">
+                    <div className="tamper-alert font-black">
                         <Icon name="shieldAlert" className="w-20 h-20 mb-6 animate-bounce text-white" />
-                        <h1 className="text-3xl uppercase italic text-white">SENTINEL BLOCK</h1>
+                        <h1 className="text-3xl uppercase italic text-white text-center px-4">SENTINEL BLOCK</h1>
                         <button onClick={() => setTamperDetected(false)} className="mt-12 px-10 py-4 bg-white text-red-800 rounded-2xl font-black uppercase text-xs">Reset Kernel</button>
                     </div>
                 );
@@ -371,7 +355,7 @@
 
             if (showLoginModal) {
                 return (
-                    <div className="app-container">
+                    <div className="app-container mx-auto">
                         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-3xl">
                             <div className="tactical-module w-full max-w-[320px] h-auto p-8 text-center space-y-6 border-white/20 animate-in">
                                 <img src="edkultra.svg" className="w-16 h-16 mx-auto" alt="Logo" />
@@ -386,25 +370,19 @@
 
             return (
                 <div className={`app-container animate-in no-select ${isPulseActive ? 'border-pulse-active' : ''}`}>
-                    <div className="laser-engraving-label">{engravedName} // CHRONOS-FIX-V6.2</div>
+                    <div className="laser-engraving-label">{engravedName} // AUTO-DETECT-V7.0</div>
 
                     {isLockedScreen && (
                         <div className="lock-screen-overlay" onClick={() => { setIsLockedScreen(false); playTacticalSound(300, 0.2); }}>
                             <h2 className="text-5xl font-black italic tracking-tighter mb-2">{formatTime()}</h2>
                             <p className="text-[10px] font-bold uppercase opacity-40 mb-12">{formatDate()}</p>
-                            <div className="lock-notif">
-                                <p className="text-[8px] font-black text-blue-400 uppercase">Sentinel Push</p>
-                                <p className="text-xs font-bold mt-1">Terminal blindado. Toca para continuar.</p>
-                            </div>
-                            <div className="mt-auto mb-16 animate-pulse">
-                                <Icon name="fingerprint" className="w-12 h-12 opacity-20" />
-                                <p className="text-[7px] font-black uppercase mt-2 tracking-widest">Desbloqueo Biométrico</p>
-                            </div>
+                            <div className="lock-notif"><p className="text-[8px] font-black text-blue-400 uppercase">Sentinel Push</p><p className="text-xs font-bold mt-1">Terminal adaptado al chasis físico.</p></div>
+                            <div className="mt-auto mb-16 animate-pulse"><Icon name="fingerprint" className="w-12 h-12 opacity-20" /><p className="text-[7px] font-black uppercase mt-2">Biometría</p></div>
                         </div>
                     )}
 
                     <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5 flex-shrink-0">
-                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Precise 6.3" Global Frame</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
+                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Auto Detect Mode</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
                         <div className="flex items-center gap-3">
                             <button onClick={() => { setIsLockedScreen(true); playTacticalSound(300, 0.2); }} className="opacity-30 active:scale-95"><Icon name="lock" className="w-4 h-4" /></button>
                             <img src="edkultra.svg" className="w-8 h-8 rounded-lg shadow-xl" style={{ filter: `drop-shadow(0 0 10px ${dynamicColor})` }} alt="Logo" />
@@ -415,48 +393,90 @@
                         <div className="content-padding">
                             <h2 className="text-lg font-black italic uppercase mb-4 flex items-center gap-2">
                                 <Icon name={activeTab === 'ranking' ? 'roblox_verified' : (activeTab === 'sentinel' ? 'shieldAlert' : 'cpu')} color={dynamicColor} />
-                                {sectionTitles[activeTab]}
+                                {activeTab.toUpperCase()}
                             </h2>
 
                             <div className="tactical-module">
+                                
                                 {activeTab === 'home' && (
-                                    <div className="module-scroll-area flex flex-col justify-center items-center space-y-8 text-center animate-in">
-                                        <div className="bg-gradient-to-br from-slate-900 to-black p-8 rounded-3xl border border-white/5 shadow-xl w-full">
-                                            <h2 className="text-2xl font-black italic uppercase leading-tight">OS <br/> <span style={{ color: dynamicColor }}>ACTIVO</span></h2>
+                                    <div className="module-scroll-area flex flex-col items-center space-y-6 animate-in">
+                                        <div className="bg-gradient-to-br from-slate-900 to-black p-8 rounded-3xl border border-white/5 shadow-xl w-full text-center">
+                                            <h2 className="text-2xl font-black italic uppercase leading-tight">CHASIS <br/> <span style={{ color: dynamicColor }}>AJUSTADO</span></h2>
                                             <p className="text-[9px] opacity-40 uppercase font-mono mt-2">{formatTime()} // {formatDate()}</p>
                                         </div>
-                                        <div className="p-2 bg-white rounded-xl shadow-xl"><div id="share-qr" ref={qrRef}></div></div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'vault' && (
-                                    <div className="relative w-full h-full animate-in flex flex-col">
-                                        {!isVaultUnlocked ? (
-                                            <div className="vault-lock-overlay">
-                                                <Icon name="cpu" className="w-12 h-12 mb-4 text-white/40 animate-pulse" />
-                                                <h3 className="text-sm font-black uppercase italic mb-2">Protocolo Kinético</h3>
-                                                <p className="text-[8px] opacity-40 uppercase font-black text-center">Agita para abrir la bóveda táctica</p>
-                                            </div>
-                                        ) : (
-                                            <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 text-center animate-in">
-                                                <Icon name="roblox_verified" className="w-16 h-16" color="#f9d423" />
-                                                <h3 className="text-lg font-black italic uppercase">Bóveda Abierta</h3>
-                                                <button className="py-4 px-10 bg-yellow-500 text-black rounded-xl font-black text-[9px] uppercase shadow-xl active:scale-95 transition-transform" onClick={() => playTacticalSound(1000, 0.2)}>Reclamar Verificado</button>
-                                                <button onClick={() => setIsVaultUnlocked(false)} className="text-[7px] opacity-30 font-bold uppercase">Cerrar</button>
-                                            </div>
-                                        )}
+                                        <div className="p-2 bg-white rounded-xl shadow-xl mx-auto"><div id="share-qr" ref={qrRef}></div></div>
+                                        <div className="tactical-row"><Icon name="activity" className="text-green-400" /> <span className="text-[9px] font-bold uppercase">Estado: 100% Pantalla</span></div>
                                     </div>
                                 )}
 
                                 {activeTab === 'ranking' && (
                                     <div className="module-scroll-area animate-in">
-                                        {topVerified.map((u, i) => (
-                                            <div key={i} className="ranking-item">
-                                                <img src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${u.uid}&size=150x150&format=Png&isCircular=true`} className="w-8 h-8 rounded-full border border-white/10" alt="Avatar" />
-                                                <div className="flex-1 text-xs font-bold truncate">{u.name}</div>
-                                                <span className="text-[10px] font-black opacity-20">#{i+1}</span>
+                                        <div className="space-y-1">
+                                            {topVerified.map((u, i) => (
+                                                <div key={i} className="ranking-item">
+                                                    <img src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${u.uid}&size=150x150&format=Png&isCircular=true`} className="w-8 h-8 rounded-full border border-white/10" alt="Avatar" />
+                                                    <div className="flex-1 text-xs font-bold truncate">{u.name}</div>
+                                                    <span className="text-[10px] font-black opacity-20">#{i+1}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'vault' && (
+                                    <div className="relative w-full h-full flex flex-col">
+                                        {!isVaultUnlocked ? (
+                                            <div className="vault-lock-overlay">
+                                                <Icon name="cpu" className="w-12 h-12 mb-4 text-white/40 animate-pulse" />
+                                                <h3 className="text-sm font-black uppercase italic mb-2 text-center">Protocolo Kinético</h3>
+                                                <p className="text-[8px] opacity-40 uppercase font-black text-center">Sacude para abrir</p>
                                             </div>
-                                        ))}
+                                        ) : (
+                                            <div className="module-scroll-area flex flex-col items-center space-y-4 animate-in">
+                                                <div className="tactical-row justify-center"><Icon name="roblox_verified" className="w-10 h-10" color="#f9d423" /></div>
+                                                <h3 className="text-lg font-black italic uppercase">Bóveda Abierta</h3>
+                                                <button className="py-4 px-10 bg-yellow-500 text-black rounded-xl font-black text-[9px] uppercase shadow-xl w-full">Reclamar</button>
+                                                <button onClick={() => setIsVaultUnlocked(false)} className="text-[7px] opacity-30 font-bold uppercase">Reiniciar</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {(activeTab === 'secure' || activeTab === 'admin') && (
+                                    <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 animate-in">
+                                        <div 
+                                            className="relative w-32 h-32 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden cursor-pointer"
+                                            onMouseDown={() => { setIsScanning(true); playTacticalSound(400, 0.5); scanTimerRef.current = setTimeout(() => { setIsUnlocked(true); setIsScanning(false); }, 1500); }} 
+                                            onMouseUp={() => { clearTimeout(scanTimerRef.current); setIsScanning(false); }}
+                                            onTouchStart={() => { setIsScanning(true); playTacticalSound(400, 0.5); scanTimerRef.current = setTimeout(() => { setIsUnlocked(true); setIsScanning(false); }, 1500); }} 
+                                            onTouchEnd={() => { clearTimeout(scanTimerRef.current); setIsScanning(false); }}
+                                        >
+                                            {isScanning && <div className="absolute inset-0 electric-laser" />}
+                                            <Icon name="fingerprint" className={`w-16 h-16 ${isScanning ? 'text-cyan-400' : 'opacity-20'}`} />
+                                        </div>
+                                        <div className="tactical-row"><Icon name="shield" className="text-blue-400" /> <span className="text-[9px] uppercase">Kernel Protegido</span></div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'sentinel' && (
+                                    <div className="module-scroll-area space-y-2 animate-in">
+                                        <div className="tactical-row"><Icon name="shieldAlert" color={dynamicColor} /> <div className="flex-1 text-[10px] font-bold">Anti-Tamper</div><div className="text-[8px] text-green-400">ON</div></div>
+                                        <div className="tactical-row"><Icon name="lock" /> <div className="flex-1 text-[10px] font-bold">Crypto Core</div><div className="text-[8px] text-green-400">ACTIVE</div></div>
+                                        <div className="tactical-row opacity-30"><Icon name="cpu" /> <div className="flex-1 text-[10px] font-bold">Sentinel OS</div><div className="text-[8px]">v2.5</div></div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'info' && (
+                                    <div className="module-scroll-area space-y-2 animate-in">
+                                        <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Display</span><span className="text-[10px] font-mono text-blue-400">MOBILE DETECT</span></div>
+                                        <div className="tactical-row"><span className="flex-1 text-[10px] font-bold uppercase">Kernel</span><span className="text-[10px] font-mono">v7.0</span></div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'identity' && (
+                                    <div className="module-scroll-area flex flex-col justify-center items-center space-y-6 animate-in">
+                                        <div className={`vip-card-mockup material-metal`}><div className="card-shine"></div><div className="z-10"><img src="edkultra.svg" className="w-8 h-8 opacity-40" alt="Logo" /></div><div className="z-10 mt-auto"><h3 className="text-sm font-black italic uppercase">{engravedName}</h3><Icon name="roblox_verified" className="w-6 h-6 ml-auto" /></div></div>
+                                        <div className="tactical-row justify-center"><p className="text-[9px] font-black uppercase opacity-50">Rango: Elite Agent</p></div>
                                     </div>
                                 )}
 
@@ -471,8 +491,15 @@
                                 )}
 
                                 {activeTab === 'notifs' && (
-                                    <div className="module-scroll-area space-y-4 animate-in text-center flex flex-col justify-center">
-                                        <div className="notif-card"><span className="text-[8px] font-black text-blue-400 uppercase">Status Core</span><p className="text-[10px] opacity-60 mt-1">Sincronización de reloj y linterna completada.</p></div>
+                                    <div className="module-scroll-area space-y-4 animate-in">
+                                        <div className="notif-card"><span className="text-[8px] font-black text-blue-400 uppercase">Detection Active</span><p className="text-[10px] opacity-60 mt-1">Bordes adaptados automáticamente a tu dispositivo móvil.</p></div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'laser' && (
+                                    <div className="module-scroll-area flex flex-col justify-center space-y-6 animate-in text-center">
+                                        <input type="text" value={engravedName} onChange={(e) => setEngravedName(e.target.value.toUpperCase().slice(0, 15))} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-4 font-mono text-center text-sm text-white outline-none focus:border-blue-500" />
+                                        <div className="tactical-row justify-center"><p className="text-[7px] text-center opacity-40 uppercase font-black">Chasis grabado correctamente.</p></div>
                                     </div>
                                 )}
 
@@ -483,38 +510,15 @@
                                     </div>
                                 )}
 
-                                {activeTab === 'mockup' && (
-                                    <div className="module-scroll-area space-y-6 animate-in">
-                                        <div className={`vip-card-mockup material-${cardMaterial}`}><div className="card-shine"></div><div className="flex justify-between items-start z-10"><img src="edkultra.svg" className="w-8 h-8 opacity-40" alt="L" /><p className="text-[8px] font-bold" style={{ color: dynamicColor }}>ELITE UNIT</p></div><div className="z-10 mt-auto"><h3 className="text-sm font-black italic uppercase tracking-tighter">{engravedName}</h3><Icon name="roblox_verified" className="w-6 h-6 ml-auto" /></div></div>
-                                        <div className="flex gap-2"><button onClick={() => setCardMaterial('pvc')} className={`flex-1 py-3 rounded-lg font-black text-[7px] border ${cardMaterial==='pvc'?'bg-white text-black':'border-white/10'}`}>PVC</button><button onClick={() => setCardMaterial('metal')} className={`flex-1 py-3 rounded-lg font-black text-[7px] border ${cardMaterial==='metal'?'bg-white text-black':'border-white/10'}`}>METAL</button></div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'laser' && (
-                                    <div className="module-scroll-area flex flex-col justify-center space-y-6 animate-in text-center">
-                                        <input type="text" value={engravedName} onChange={(e) => setEngravedName(e.target.value.toUpperCase().slice(0, 15))} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-4 font-mono text-center text-sm text-white outline-none focus:border-blue-500" />
-                                        <p className="text-[7px] text-center opacity-40 uppercase font-black">Tallando chasis...</p>
-                                    </div>
-                                )}
-
-                                {activeTab === 'sentinel' && (
-                                    <div className="module-scroll-area space-y-6 animate-in text-center flex flex-col justify-center">
-                                        <div className="w-20 h-20 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/30 mb-4">
-                                            <Icon name="shield" className="w-10 h-10" color={dynamicColor} />
-                                        </div>
-                                        <h3 className="text-sm font-black uppercase italic">Seguridad Sentinel</h3>
-                                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
-                                            <p className="text-[10px] font-bold text-green-400 uppercase">Blindaje Activo</p>
+                                {activeTab === 'vision' && (
+                                    <div className="relative w-full h-full">
+                                        <video ref={videoRef} autoPlay playsInline className={`camera-feed filter-${activeFilter}`}></video>
+                                        <div className="absolute bottom-4 left-0 w-full overflow-x-auto scrollbar-hide px-4 flex gap-2 z-30">
+                                            {['none', 'neon', 'night', 'thermal', 'pixel', 'glitch'].map(f => (<button key={f} onClick={() => setActiveFilter(f)} className={`filter-button ${activeFilter === f ? 'active' : ''}`}>{f}</button>))}
                                         </div>
                                     </div>
                                 )}
 
-                                {activeTab === 'info' && (
-                                    <div className="module-scroll-area flex flex-col justify-center space-y-4">
-                                        <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-[9px] opacity-40 uppercase">Diagonal</span><span className="text-[9px] font-mono">6.3"</span></div>
-                                        <div className="flex justify-between pb-2"><span className="text-[9px] opacity-40 uppercase">Kernel</span><span className="text-[9px] font-mono">v6.4</span></div>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </main>
