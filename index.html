@@ -4,166 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title id="app-title">EDK APP ULTRA Pro - v11.7 Fluid Forge</title>
-    
-    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
-    <link rel="apple-touch-icon" href="edkultra.svg">
-    
     <meta name="theme-color" content="#020617">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        window.fb = { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, serverTimestamp };
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        window.fb = { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, getFirestore, doc, setDoc, onSnapshot };
     </script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap');
-        
         :root {
             --gloss-angle: 135deg;
             --dynamic-rgb: #00d2ff;
             --dynamic-rgb-2: #ffffff;
             --rgb-values: 0, 210, 255;
             --pattern-style: linear-gradient(var(--gloss-angle), var(--dynamic-rgb) 0%, var(--dynamic-rgb-2) 100%);
-            --gyro-x: 50%;
-            --gyro-y: 50%;
+            --gyro-x: 50%; --gyro-y: 50%;
             --border-width: 14px;
-            --elastic-scale-x: 1;
-            --elastic-scale-y: 1;
-            --elastic-skew: 0deg;
+            --elastic-scale-x: 1; --elastic-scale-y: 1; --elastic-skew: 0deg;
         }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #000; 
-            margin: 0; 
-            overflow: hidden; 
-            color: white; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100dvh;
-            width: 100vw;
-        }
-
-        /* --- CHASIS HERITAGE EDGE REFORZADO --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; margin: 0; overflow: hidden; color: white; display: flex; justify-content: center; align-items: center; height: 100dvh; width: 100vw; }
         .app-container { 
-            position: relative; 
-            width: 100vw; height: 100dvh;
+            position: relative; width: 100vw; height: 100dvh;
             background-image: linear-gradient(#020617, #020617), var(--pattern-style);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-            border: var(--border-width) solid transparent; 
-            border-radius: 2.8rem;
-            box-shadow: inset 0 0 30px rgba(0,0,0,1);
-            transition: border-radius 0.4s;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            background-origin: border-box; background-clip: padding-box, border-box;
+            border: var(--border-width) solid transparent; border-radius: 2.8rem;
+            box-shadow: inset 0 0 30px rgba(0,0,0,1); transition: border-radius 0.4s;
+            overflow: hidden; display: flex; flex-direction: column;
         }
-
-        @media (min-width: 1024px) {
-            :root { --border-width: 18px; }
-            .app-container { max-width: 395px; max-height: 854px; border-radius: 3.8rem; }
-        }
-
-        /* ICONO ELÁSTICO */
-        .elastic-logo {
-            transition: transform 0.1s ease-out;
-            transform: scale(var(--elastic-scale-x), var(--elastic-scale-y)) skew(var(--elastic-skew));
-            filter: drop-shadow(0 0 10px var(--dynamic-rgb));
-        }
-
-        /* Animaciones */
-        .border-pulse-active {
-            animation: border-glow-pulse 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-        @keyframes border-glow-pulse { 
-            0% { filter: brightness(1); } 
-            30% { filter: brightness(2.5) saturate(1.5); } 
-            100% { filter: brightness(1); } 
-        }
-
-        .tactical-module {
-            width: 100%; height: 420px; 
-            background: rgba(0, 0, 0, 0.85); 
-            border: 1.5px solid var(--dynamic-rgb);
-            box-shadow: 0 0 25px rgba(var(--rgb-values), 0.15), inset 0 0 15px rgba(var(--rgb-values), 0.05);
-            border-radius: 2.2rem;
-            position: relative; overflow: hidden;
-            display: flex; flex-direction: column;
-            transition: all 0.5s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        .module-scroll-area {
-            flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
-            padding: 1.25rem; touch-action: pan-y;
-        }
+        @media (min-width: 1024px) { .app-container { max-width: 395px; max-height: 854px; border-radius: 3.8rem; } }
+        .elastic-logo { transition: transform 0.1s ease-out; transform: scale(var(--elastic-scale-x), var(--elastic-scale-y)) skew(var(--elastic-skew)); filter: drop-shadow(0 0 10px var(--dynamic-rgb)); }
+        .border-pulse-active { animation: border-glow-pulse 0.6s forwards; }
+        @keyframes border-glow-pulse { 30% { filter: brightness(2.5); } 100% { filter: brightness(1); } }
+        .tactical-module { width: 100%; height: 420px; background: rgba(0, 0, 0, 0.85); border: 1.5px solid var(--dynamic-rgb); border-radius: 2.2rem; position: relative; overflow: hidden; display: flex; flex-direction: column; backdrop-filter: blur(10px); }
+        .module-scroll-area { flex: 1; overflow-y: auto; padding: 1.25rem; }
         .module-scroll-area::-webkit-scrollbar { display: none; }
-
-        .main-scroll-viewport { flex: 1; overflow: hidden; position: relative; z-index: 10; display: flex; flex-direction: column; }
-        .content-padding { flex: 1; padding: 1.25rem; display: flex; flex-direction: column; justify-content: center; }
-
-        .nav-dock-container {
-            position: absolute; bottom: 0; width: 100%;
-            background: linear-gradient(to top, #020617 95%, transparent);
-            padding: 8px 0 24px 0; z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
-        }
+        .nav-dock-container { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #020617 90%, transparent); padding: 8px 0 24px 0; z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
         .nav-row { display: flex; justify-content: space-around; width: 100%; padding: 0 0.5rem; }
-        
-        .nav-btn-wrapper {
-            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(35px); border-radius: 1.1rem; width: 38px; height: 38px;
-            display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;
-        }
-        .nav-btn-wrapper.active { background: white; transform: translateY(-3px) scale(1.1); box-shadow: 0 0 15px var(--dynamic-rgb); }
+        .nav-btn-wrapper { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.1rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .nav-btn-wrapper.active { background: white; box-shadow: 0 0 15px var(--dynamic-rgb); }
         .nav-btn-wrapper.active svg { stroke: #000; }
-        
-        .tactical-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; width: 100%; }
-        .tamper-alert { position: fixed; inset: 0; background: #7f1d1d; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        .boot-screen { position: fixed; inset: 0; background: #020617; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--dynamic-rgb); font-family: 'JetBrains Mono', monospace; }
-        
-        .material-option {
-            padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1);
-            font-size: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; text-align: center; transition: 0.3s;
-        }
-        .material-option.active { background: white; color: black; transform: scale(1.05); border-color: white; }
-        
-        .reflective-preview-box {
-            width: 100%; height: 80px; border-radius: 1.2rem; margin-bottom: 1rem;
-            position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .reflective-surface-layer {
-            position: absolute; inset: 0;
-            background: radial-gradient(circle at var(--gyro-x) var(--gyro-y), rgba(255,255,255,0.7) 0%, transparent 70%);
-            mix-blend-mode: overlay; pointer-events: none;
-        }
-        .vault-lock-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; z-index: 50; }
-        .pattern-btn { flex: 1; padding: 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); font-size: 8px; font-weight: 800; text-transform: uppercase; text-align: center; transition: 0.3s; }
-        .pattern-btn.active { background: white; color: black; }
-
-        .sonic-wave { height: 40px; display: flex; align-items: center; justify-content: center; gap: 3px; }
-        .sonic-bar { width: 3px; height: 10px; background: var(--dynamic-rgb); border-radius: 2px; }
-        .sonic-active .sonic-bar { animation: sonic-pulse 0.5s ease-in-out infinite alternate; }
-        @keyframes sonic-pulse { from { height: 10px; opacity: 0.3; } to { height: 30px; opacity: 1; } }
-
-        .vip-card-mockup { width: 100%; aspect-ratio: 1.58/1; border-radius: 1.4rem; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 1.25rem; box-shadow: 0 15px 30px rgba(0,0,0,0.8); }
-        .material-metal { background: linear-gradient(135deg, #1f2937 0%, #000 100%); border: 1px solid rgba(255,255,255,0.2); }
+        .tamper-alert { position: fixed; inset: 0; background: #450a0a; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; }
+        .material-option { padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; text-align: center; }
+        .material-option.active { background: white; color: black; }
     </style>
 </head>
 <body>
@@ -175,282 +65,108 @@
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
             const icons = {
                 home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
-                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM4 8v10h16V8H4z" />,
                 shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
-                cpu: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM9 9h6v6H9V9z" />,
+                palette: <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.5 2-1.2" />,
                 lock: <path d="M7 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />,
-                info: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" /></React.Fragment>,
-                palette: <React.Fragment><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.5 2-1.2"/></React.Fragment>,
-                sparkles: <path d="M12 3l1.91 5.81L21 12l-7.09 3.19L12 21l-1.91-5.81L3 12l7.09-3.19zM5 5l1 1M19 5l-1 1M5 19l1-1M19 19l-1-1" />,
-                radio: <React.Fragment><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4m3.5-11.9a11 11 0 0 1 0 15.4M7.8 7.8a6 6 0 0 0 0 8.4m-3.5-11.9a11 11 0 0 0 0 15.4"/></React.Fragment>,
-                roblox_verified: <React.Fragment>
-                    <path d="M4.332 7.002L13.332 3.002C14.444 2.508 15.753 3.004 16.257 4.11L20.257 13.11C20.761 14.216 20.265 15.525 19.159 16.029L10.159 20.029C9.053 20.533 7.744 20.037 7.24 18.931L3.24 9.931C2.736 8.825 3.232 7.516 4.332 7.002Z" fill="#0084ff" />
-                    <path d="M8.5 12L10.5 14L15.5 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </React.Fragment>
+                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />,
+                sparkles: <path d="M12 3l1.91 5.81L21 12l-7.09 3.19L12 21l-1.91-5.81L3 12l7.09-3.19z" />
             };
-            return <svg viewBox="0 0 24 24" fill="none" stroke={name === 'roblox_verified' ? 'none' : color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || <circle cx="12" cy="12" r="5" />}</svg>;
+            return <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
         };
 
         const App = () => {
-            const fbRefs = useRef({ db: null, auth: null, appId: 'edk-ultra-v117' });
-            const qrRef = useRef(null);
-            const audioCtx = useRef(null);
-
-            const [isBooted, setIsBooted] = useState(false);
-            const [user, setUser] = useState(null);
             const [activeTab, setActiveTab] = useState('home');
-            const [isOwner, setIsOwner] = useState(false);
-            const [showLoginModal, setShowLoginModal] = useState(true);
-            const [passInput, setPassInput] = useState('');
-            const [isPulseActive, setIsPulseActive] = useState(false);
             const [tamperDetected, setTamperDetected] = useState(false);
-            const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
-            const [currentTime, setCurrentTime] = useState(new Date());
+            const [color1, setColor1] = useState('#00d2ff');
+            const [activeMaterial, setActiveMaterial] = useState('none');
 
-            const [color1, setColor1] = useState(() => localStorage.getItem('edk_c1') || '#00d2ff');
-            const [color2, setColor2] = useState(() => localStorage.getItem('edk_c2') || '#ffffff');
-            const [activePattern, setActivePattern] = useState(() => localStorage.getItem('edk_pattern') || 'solid');
-            const [activeShape, setActiveShape] = useState(() => localStorage.getItem('edk_shape') || 'linear');
-            const [activeMaterial, setActiveMaterial] = useState(() => localStorage.getItem('edk_active_mat') || 'none');
-
-            const [sonicMsg, setSonicMsg] = useState('EDK_ULTRA');
-            const [isTransmitting, setIsTransmitting] = useState(false);
-            const [decodedMsg, setDecodedMsg] = useState('---');
-
+            // --- PROTOCOLO SENTINEL (PROTECCIÓN) ---
             useEffect(() => {
-                const boot = async () => {
-                    try {
-                        const config = JSON.parse(__firebase_config);
-                        const app = fb.initializeApp(config);
-                        fbRefs.current.auth = fb.getAuth(app);
-                        fbRefs.current.db = fb.getFirestore(app);
-                        fbRefs.current.appId = typeof __app_id !== 'undefined' ? __app_id : 'edk-ultra-v117';
-                        await fb.signInAnonymously(fbRefs.current.auth);
-                        fb.onAuthStateChanged(fbRefs.current.auth, (u) => { if (u) { setUser(u); setIsBooted(true); } });
-                    } catch (e) { setIsBooted(true); }
+                const triggerSentinel = () => setTamperDetected(true);
+
+                // Detección de DevTools (Cambio de tamaño de ventana interno)
+                const checkDev = () => {
+                    const diff = 160;
+                    if (window.outerWidth - window.innerWidth > diff || window.outerHeight - window.innerHeight > diff) {
+                        triggerSentinel();
+                    }
                 };
-                boot();
+
+                // Bloqueo de Teclas y Clic Derecho
+                const handleKey = (e) => {
+                    if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+                        e.preventDefault();
+                        triggerSentinel();
+                    }
+                };
+                
+                window.addEventListener('resize', checkDev);
+                window.addEventListener('keydown', handleKey);
+                window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                return () => {
+                    window.removeEventListener('resize', checkDev);
+                    window.removeEventListener('keydown', handleKey);
+                };
             }, []);
 
-            // Motor Giroscopio y Efecto Elástico
+            // Giroscopio para Logo Elástico
             useEffect(() => {
-                const handleGyro = (e) => {
-                    const gamma = e.gamma || 0; // -90 a 90
-                    const beta = e.beta || 0;   // -180 a 180
-                    
-                    const gx = (gamma + 90) / 1.8;
-                    const gy = (beta + 90) / 1.8;
-                    document.documentElement.style.setProperty('--gyro-x', `${gx}%`);
-                    document.documentElement.style.setProperty('--gyro-y', `${gy}%`);
-                    
-                    // Lógica Elástica: Calculamos el estiramiento basado en la inclinación
-                    // Si inclinamos a la derecha (gamma positivo), el logo se ensancha en X
-                    const stretchX = 1 + (Math.abs(gamma) / 150);
-                    const stretchY = 1 + (Math.abs(beta) / 150);
-                    const skew = (gamma / 10);
-
-                    document.documentElement.style.setProperty('--elastic-scale-x', stretchX);
-                    document.documentElement.style.setProperty('--elastic-scale-y', stretchY);
-                    document.documentElement.style.setProperty('--elastic-skew', `${skew}deg`);
-
-                    if (Math.abs(gamma) > 65 && activeTab === 'vault') setIsVaultUnlocked(true);
+                const handleMotion = (e) => {
+                    const g = e.gamma || 0;
+                    const b = e.beta || 0;
+                    document.documentElement.style.setProperty('--elastic-scale-x', 1 + Math.abs(g)/200);
+                    document.documentElement.style.setProperty('--elastic-scale-y', 1 + Math.abs(b)/200);
+                    document.documentElement.style.setProperty('--elastic-skew', `${g/10}deg`);
                 };
-                window.addEventListener('deviceorientation', handleGyro);
-                return () => window.removeEventListener('deviceorientation', handleGyro);
-            }, [activeTab]);
+                window.addEventListener('deviceorientation', handleMotion);
+                return () => window.removeEventListener('deviceorientation', handleMotion);
+            }, []);
 
-            useEffect(() => {
-                document.documentElement.style.setProperty('--dynamic-rgb', color1);
-                document.documentElement.style.setProperty('--dynamic-rgb-2', color2);
-                const r = parseInt(color1.slice(1,3), 16), g = parseInt(color1.slice(3,5), 16), b = parseInt(color1.slice(5,7), 16);
-                document.documentElement.style.setProperty('--rgb-values', `${r}, ${g}, ${b}`);
-                
-                let pCSS = "";
-                if (activeMaterial !== 'none') {
-                    const mats = materialStylesList;
-                    pCSS = mats[activeMaterial]?.background || "";
-                } else {
-                    const c1 = color1, c2 = color2;
-                    if (activeShape === 'linear') {
-                        pCSS = activePattern === 'solid' ? `linear-gradient(135deg, ${c1} 0%, ${c1} 100%)` : 
-                               activePattern === 'dual' ? `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)` :
-                               activePattern === 'pulse' ? `linear-gradient(135deg, ${c1} 0%, ${c2} 50%, ${c1} 100%)` :
-                               `linear-gradient(45deg, ${c1}, ${c2}, ${c1}, ${c2})`;
-                    } else if (activeShape === 'radial') {
-                        pCSS = `radial-gradient(circle, ${c1} 0%, ${activePattern === 'solid' ? c1 : c2} 100%)`;
-                    } else if (activeShape === 'conic') {
-                        pCSS = `conic-gradient(from 180deg at 50% 50%, ${c1}, ${activePattern === 'solid' ? c1 : c2}, ${c1})`;
-                    }
-                }
-                document.documentElement.style.setProperty('--pattern-style', pCSS);
-                localStorage.setItem('edk_active_mat', activeMaterial);
-                localStorage.setItem('edk_c1', color1); localStorage.setItem('edk_c2', color2); 
-                localStorage.setItem('edk_pattern', activePattern); localStorage.setItem('edk_shape', activeShape);
-            }, [color1, color2, activePattern, activeShape, activeMaterial]);
-
-            useEffect(() => {
-                if (activeTab === 'home' && qrRef.current && !showLoginModal) {
-                    qrRef.current.innerHTML = "";
-                    new QRCode(qrRef.current, { text: window.location.href, width: 130, height: 130 });
-                }
-            }, [activeTab, showLoginModal]);
-
-            const handleTabChange = (tab) => {
-                setActiveTab(tab);
-                setIsPulseActive(true);
-                setTimeout(() => setIsPulseActive(false), 600);
-            };
-
-            if (!isBooted) return <div className="boot-screen"><img src="edkultra.svg" className="w-16 h-16 animate-pulse" /></div>;
-
-            if (showLoginModal) return (
-                <div className="app-container mx-auto">
-                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-3xl">
-                        <div className="tactical-module w-full max-w-[320px] h-auto p-8 text-center space-y-6 border-white/20 animate-in">
-                            <img src="edkultra.svg" className="w-16 h-16 mx-auto" />
-                            <h2 className="text-xl font-black uppercase italic tracking-tighter">Terminal Access</h2>
-                            <input type="password" placeholder="Passphrase..." value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-center font-mono outline-none" />
-                            <button onClick={() => { if(passInput === '1234') setIsOwner(true); setShowLoginModal(false); }} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Validate</button>
-                        </div>
-                    </div>
+            if (tamperDetected) return (
+                <div className="tamper-alert">
+                    <Icon name="shield" className="w-20 h-20 mb-4 animate-pulse" color="#ff0000" />
+                    <h1 className="text-2xl font-black italic uppercase">Sentinel Breach</h1>
+                    <p className="text-[10px] font-mono opacity-60">UNAUTHORIZED ENVIRONMENT DETECTED</p>
+                    <button onClick={() => window.location.reload()} className="mt-8 px-8 py-3 bg-white text-black font-black text-[9px] rounded-full">RE-BOOT SYSTEM</button>
                 </div>
             );
 
-            const materialStylesList = {
-                titanium: { background: 'linear-gradient(135deg, #374151 0%, #111827 100%)', label: 'Titanio' },
-                gold: { background: 'linear-gradient(135deg, #d4af37 0%, #8a6d3b 100%)', label: 'Oro 24K' },
-                water: { background: 'radial-gradient(circle at var(--gyro-x) var(--gyro-y), #e0f2fe 0%, #0ea5e9 60%, #0369a1 100%)', label: 'Agua Táctica' },
-                plasma: { background: 'radial-gradient(circle at var(--gyro-x) var(--gyro-y), #fbcfe8 0%, #d946ef 40%, #701a75 100%)', label: 'Plasma Nuclear' },
-                blue_crystal: { background: 'radial-gradient(circle at var(--gyro-x) var(--gyro-y), #60a5fa 0%, #1d4ed8 50%, #1e3a8a 100%)', label: 'Cristal Azul' },
-                carbon: { background: 'repeating-linear-gradient(45deg, #111 0px, #111 2px, #222 2px, #222 4px)', label: 'Carbono' }
-            };
-
             return (
-                <div className={`app-container animate-in no-select ${isPulseActive ? 'border-pulse-active' : ''} ${activePattern === 'wave' && activeMaterial === 'none' ? 'pattern-wave' : ''}`}>
-                    <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5 flex-shrink-0">
-                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Molecular Fluid Chasis</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
-                        <img src="edkultra.svg" className="w-8 h-8 rounded-lg elastic-logo" />
+                <div className="app-container">
+                    <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5">
+                        <div>
+                            <p className="text-[7px] font-black uppercase tracking-widest text-white/30">Protocol Sentinel Active</p>
+                            <h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
+                        </div>
+                        <img src="edkultra.svg" className="w-8 h-8 elastic-logo" />
                     </header>
 
-                    <main className="main-scroll-viewport">
-                        <div className="content-padding">
-                            <h2 className="text-lg font-black italic uppercase mb-4 flex items-center gap-2">
-                                <Icon name={activeTab === 'materials' ? 'sparkles' : (activeTab === 'sentinel' ? 'shield' : (activeTab === 'vault' ? 'lock' : 'cpu'))} color={color1} />
-                                {activeTab.toUpperCase()}
-                            </h2>
-
-                            <div className="tactical-module">
-                                {activeTab === 'home' && (
-                                    <div className="module-scroll-area flex flex-col items-center space-y-6 animate-in">
-                                        <div className="bg-gradient-to-br from-slate-900 to-black p-8 rounded-3xl border border-white/5 shadow-xl w-full text-center">
-                                            <h2 className="text-2xl font-black italic uppercase leading-tight">STATUS <br/> <span style={{ color: color1 }}>ONLINE</span></h2>
-                                        </div>
-                                        <div className="p-2 bg-white rounded-xl shadow-xl mx-auto"><div id="share-qr" ref={qrRef}></div></div>
-                                        <div className="tactical-row"><Icon name="activity" className="text-green-400" /> <span className="text-[9px] font-bold uppercase">Kernel: v11.7 Fluid Engine</span></div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'materials' && (
-                                    <div className="module-scroll-area animate-in">
-                                        <div className="reflective-preview-box">
-                                            <div className="absolute inset-0" style={{ background: activeMaterial === 'none' ? color1 : materialStylesList[activeMaterial]?.background || '#333' }}></div>
-                                            <div className="reflective-surface-layer"></div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div onClick={() => setActiveMaterial('none')} className={`material-option ${activeMaterial === 'none' ? 'active' : ''}`}>Estándar RGB</div>
-                                            {Object.keys(materialStylesList).map(m => (
-                                                <div key={m} onClick={() => setActiveMaterial(m)} className={`material-option ${activeMaterial === m ? 'active' : ''}`}>
-                                                    {materialStylesList[m].label}
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="mt-4 tactical-row bg-blue-500/5 border-blue-500/10"><p className="text-[6.5px] font-black uppercase text-center w-full">El Logo EDK ahora es elástico y reacciona al movimiento.</p></div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'rgb' && (
-                                    <div className="module-scroll-area space-y-4 animate-in">
-                                        <p className="text-[8px] font-black uppercase opacity-40">Geometría</p>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {['linear', 'radial', 'conic'].map(s => (
-                                                <button key={s} onClick={() => { setActiveShape(s); setActiveMaterial('none'); }} className={`pattern-btn ${activeShape === s ? 'active' : ''}`}>{s.toUpperCase()}</button>
-                                            ))}
-                                        </div>
-                                        <p className="text-[8px] font-black uppercase opacity-40 mt-2">Patrón de Aura</p>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {['solid', 'dual', 'wave', 'pulse'].map(p => (
-                                                <button key={p} onClick={() => { setActivePattern(p); setActiveMaterial('none'); }} className={`pattern-btn ${activePattern === p ? 'active' : ''}`}>{p.toUpperCase()}</button>
-                                            ))}
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4 mt-2">
-                                            <div className="text-center"><p className="text-[7px] font-black uppercase opacity-40 mb-1">Color 1</p><input type="color" value={color1} onChange={(e) => setColor1(e.target.value)} className="w-full h-8 bg-transparent cursor-pointer" /></div>
-                                            <div className="text-center"><p className="text-[7px] font-black uppercase opacity-40 mb-1">Color 2</p><input type="color" value={color2} onChange={(e) => setColor2(e.target.value)} className="w-full h-8 bg-transparent cursor-pointer" /></div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'vault' && (
-                                    <div className="relative w-full h-full">
-                                        {!isVaultUnlocked ? (
-                                            <div className="vault-lock-overlay">
-                                                <Icon name="cpu" className="w-12 h-12 mb-4 text-white/40 animate-pulse" />
-                                                <h3 className="text-sm font-black uppercase italic text-center">Impacto Kinético</h3>
-                                                <p className="text-[8px] opacity-40 uppercase font-black text-center">Agita para abrir bóveda</p>
-                                            </div>
-                                        ) : (
-                                            <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 text-center animate-in">
-                                                <Icon name="roblox_verified" className="w-16 h-16" color="#f9d423" />
-                                                <h3 className="text-lg font-black italic uppercase text-yellow-400">Bóveda Abierta</h3>
-                                                <button className="py-4 px-10 bg-yellow-500 text-black rounded-xl font-black text-[9px] uppercase shadow-xl w-full">Reclamar Activos</button>
-                                                <button onClick={() => setIsVaultUnlocked(false)} className="text-[7px] opacity-30 font-bold uppercase">Cerrar</button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {activeTab === 'ranking' && (
-                                    <div className="module-scroll-area animate-in">
-                                        {[1,2,3,5,10,15,20,25].map(i => (
-                                            <div key={i} className="tactical-row">
-                                                <div className="w-8 h-8 bg-white/10 rounded-full overflow-hidden"><img src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${i*1000}&size=150x150&format=Png`} /></div>
-                                                <div className="flex-1 text-xs font-bold truncate">Elite_Agent_{i}</div>
-                                                <span className="text-[10px] font-black opacity-20">#{i}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {activeTab === 'sentinel' && (
-                                    <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 animate-in text-center px-6">
-                                        <Icon name="shield" className="w-16 h-16 text-blue-400 animate-pulse" />
-                                        <h3 className="text-sm font-black uppercase italic">Protocolo Sentinel</h3>
-                                        <p className="text-[8px] opacity-40 uppercase font-black">Monitoreo térmico y estructural activo. Los bordes moleculares están en modo de autorreparación.</p>
-                                    </div>
-                                )}
-
-                                {activeTab === 'identity' && (
-                                    <div className="module-scroll-area flex flex-col justify-center items-center space-y-6 animate-in">
-                                        <div className="vip-card-mockup material-metal"><div className="card-shine"></div><img src="edkultra.svg" className="w-8 h-8 opacity-40" alt="L" /><div className="mt-auto"><h3 className="text-sm font-black italic uppercase tracking-tighter">AGENTE EDK</h3><Icon name="roblox_verified" className="w-6 h-6 ml-auto" /></div></div>
-                                        <div className="tactical-row justify-center"><p className="text-[9px] font-black uppercase opacity-50">Acceso: Agente Verificado</p></div>
-                                    </div>
-                                )}
+                    <main className="flex-1 p-6 flex flex-col justify-center">
+                        <div className="tactical-module">
+                            <div className="module-scroll-area space-y-4">
+                                <h2 className="text-lg font-black italic uppercase flex items-center gap-2">
+                                    <Icon name="shield" color={color1} /> SENTINEL STATUS
+                                </h2>
+                                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                                    <p className="text-[10px] font-bold text-green-400 uppercase">● Shield: Active</p>
+                                    <p className="text-[10px] font-bold text-blue-400 uppercase">● Anti-Debug: Monitoring</p>
+                                    <p className="text-[10px] font-bold text-white/40 uppercase">● Encryption: AES-256 Fluid</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="material-option active">Core Secure</div>
+                                    <div className="material-option" onClick={() => setActiveTab('rgb')}>Config RGB</div>
+                                </div>
                             </div>
                         </div>
                     </main>
 
                     <nav className="nav-dock-container">
                         <div className="nav-row">
-                            <button onClick={() => handleTabChange('rgb')} className={`nav-btn-wrapper ${activeTab === 'rgb' ? 'active' : ''}`}><Icon name="palette" /></button>
-                            <button onClick={() => handleTabChange('home')} className={`nav-btn-wrapper ${activeTab === 'home' ? 'active' : ''}`}><Icon name="home" /></button>
-                            <button onClick={() => handleTabChange('ranking')} className={`nav-btn-wrapper ${activeTab === 'ranking' ? 'active' : ''}`}><Icon name="roblox_verified" /></button>
-                            <button onClick={() => handleTabChange('info')} className={`nav-btn-wrapper ${activeTab === 'info' ? 'active' : ''}`}><Icon name="info" /></button>
-                            <button onClick={() => handleTabChange('sentinel')} className={`nav-btn-wrapper ${activeTab === 'sentinel' ? 'active' : ''}`}><Icon name="shield" /></button>
-                        </div>
-                        <div className="nav-row">
-                            <button onClick={() => handleTabChange('vault')} className={`nav-btn-wrapper ${activeTab === 'vault' ? 'active' : ''}`}><Icon name="lock" /></button>
-                            <button onClick={() => handleTabChange('materials')} className={`nav-btn-wrapper ${activeTab === 'materials' ? 'active' : ''}`}><Icon name="sparkles" /></button>
-                            <button onClick={() => handleTabChange('identity')} className={`nav-btn-wrapper ${activeTab === 'identity' ? 'active' : ''}`}><Icon name="id" /></button>
-                            <button onClick={() => handleTabChange('sonic')} className={`nav-btn-wrapper ${activeTab === 'sonic' ? 'active' : ''}`}><Icon name="radio" /></button>
+                            <button onClick={() => setActiveTab('home')} className={`nav-btn-wrapper ${activeTab === 'home' ? 'active' : ''}`}><Icon name="home" /></button>
+                            <button onClick={() => setActiveTab('rgb')} className={`nav-btn-wrapper ${activeTab === 'rgb' ? 'active' : ''}`}><Icon name="palette" /></button>
+                            <button onClick={() => setActiveTab('sentinel')} className={`nav-btn-wrapper ${activeTab === 'sentinel' ? 'active' : ''}`}><Icon name="shield" /></button>
+                            <button onClick={() => setActiveTab('vault')} className={`nav-btn-wrapper ${activeTab === 'vault' ? 'active' : ''}`}><Icon name="lock" /></button>
                         </div>
                     </nav>
                 </div>
