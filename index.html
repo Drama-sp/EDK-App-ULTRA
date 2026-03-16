@@ -4,56 +4,158 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title id="app-title">EDK APP ULTRA Pro - v11.7 Fluid Forge</title>
+    
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="edkultra.svg">
+    <link rel="apple-touch-icon" href="edkultra.svg">
+    
     <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        window.fb = { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, getFirestore, doc, setDoc, onSnapshot };
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.fb = { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, serverTimestamp };
     </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap');
+        
         :root {
             --gloss-angle: 135deg;
             --dynamic-rgb: #00d2ff;
             --dynamic-rgb-2: #ffffff;
             --rgb-values: 0, 210, 255;
             --pattern-style: linear-gradient(var(--gloss-angle), var(--dynamic-rgb) 0%, var(--dynamic-rgb-2) 100%);
-            --gyro-x: 50%; --gyro-y: 50%;
+            --gyro-x: 50%;
+            --gyro-y: 50%;
             --border-width: 14px;
-            --elastic-scale-x: 1; --elastic-scale-y: 1; --elastic-skew: 0deg;
+            --elastic-scale-x: 1;
+            --elastic-scale-y: 1;
+            --elastic-skew: 0deg;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; margin: 0; overflow: hidden; color: white; display: flex; justify-content: center; align-items: center; height: 100dvh; width: 100vw; }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #000; 
+            margin: 0; 
+            overflow: hidden; 
+            color: white; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100dvh;
+            width: 100vw;
+        }
+
         .app-container { 
-            position: relative; width: 100vw; height: 100dvh;
+            position: relative; 
+            width: 100vw; height: 100dvh;
             background-image: linear-gradient(#020617, #020617), var(--pattern-style);
-            background-origin: border-box; background-clip: padding-box, border-box;
-            border: var(--border-width) solid transparent; border-radius: 2.8rem;
-            box-shadow: inset 0 0 30px rgba(0,0,0,1); transition: border-radius 0.4s;
-            overflow: hidden; display: flex; flex-direction: column;
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            border: var(--border-width) solid transparent; 
+            border-radius: 2.8rem;
+            box-shadow: inset 0 0 30px rgba(0,0,0,1);
+            transition: border-radius 0.4s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
-        @media (min-width: 1024px) { .app-container { max-width: 395px; max-height: 854px; border-radius: 3.8rem; } }
-        .elastic-logo { transition: transform 0.1s ease-out; transform: scale(var(--elastic-scale-x), var(--elastic-scale-y)) skew(var(--elastic-skew)); filter: drop-shadow(0 0 10px var(--dynamic-rgb)); }
-        .border-pulse-active { animation: border-glow-pulse 0.6s forwards; }
-        @keyframes border-glow-pulse { 30% { filter: brightness(2.5); } 100% { filter: brightness(1); } }
-        .tactical-module { width: 100%; height: 420px; background: rgba(0, 0, 0, 0.85); border: 1.5px solid var(--dynamic-rgb); border-radius: 2.2rem; position: relative; overflow: hidden; display: flex; flex-direction: column; backdrop-filter: blur(10px); }
-        .module-scroll-area { flex: 1; overflow-y: auto; padding: 1.25rem; }
+
+        @media (min-width: 1024px) {
+            :root { --border-width: 18px; }
+            .app-container { max-width: 395px; max-height: 854px; border-radius: 3.8rem; }
+        }
+
+        .elastic-logo {
+            transition: transform 0.1s ease-out;
+            transform: scale(var(--elastic-scale-x), var(--elastic-scale-y)) skew(var(--elastic-skew));
+            filter: drop-shadow(0 0 10px var(--dynamic-rgb));
+        }
+
+        .border-pulse-active {
+            animation: border-glow-pulse 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes border-glow-pulse { 
+            0% { filter: brightness(1); } 
+            30% { filter: brightness(2.5) saturate(1.5); } 
+            100% { filter: brightness(1); } 
+        }
+
+        .tactical-module {
+            width: 100%; height: 420px; 
+            background: rgba(0, 0, 0, 0.85); 
+            border: 1.5px solid var(--dynamic-rgb);
+            box-shadow: 0 0 25px rgba(var(--rgb-values), 0.15), inset 0 0 15px rgba(var(--rgb-values), 0.05);
+            border-radius: 2.2rem;
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column;
+            transition: all 0.5s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .module-scroll-area {
+            flex: 1; overflow-y: auto; padding: 1.25rem;
+        }
         .module-scroll-area::-webkit-scrollbar { display: none; }
-        .nav-dock-container { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #020617 90%, transparent); padding: 8px 0 24px 0; z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+
+        .main-scroll-viewport { flex: 1; overflow: hidden; position: relative; z-index: 10; display: flex; flex-direction: column; }
+        .content-padding { flex: 1; padding: 1.25rem; display: flex; flex-direction: column; justify-content: center; }
+
+        .nav-dock-container {
+            position: absolute; bottom: 0; width: 100%;
+            background: linear-gradient(to top, #020617 95%, transparent);
+            padding: 8px 0 24px 0; z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center;
+        }
         .nav-row { display: flex; justify-content: space-around; width: 100%; padding: 0 0.5rem; }
-        .nav-btn-wrapper { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.1rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-        .nav-btn-wrapper.active { background: white; box-shadow: 0 0 15px var(--dynamic-rgb); }
+        
+        .nav-btn-wrapper {
+            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(35px); border-radius: 1.1rem; width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer;
+        }
+        .nav-btn-wrapper.active { background: white; transform: translateY(-3px) scale(1.1); box-shadow: 0 0 15px var(--dynamic-rgb); }
         .nav-btn-wrapper.active svg { stroke: #000; }
-        .tamper-alert { position: fixed; inset: 0; background: #450a0a; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; }
-        .material-option { padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; text-align: center; }
-        .material-option.active { background: white; color: black; }
+        
+        .tactical-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; width: 100%; }
+        
+        .tamper-alert { position: fixed; inset: 0; background: #450a0a; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .boot-screen { position: fixed; inset: 0; background: #020617; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--dynamic-rgb); font-family: 'JetBrains Mono', monospace; }
+        
+        .material-option {
+            padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1);
+            font-size: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; text-align: center; transition: 0.3s;
+        }
+        .material-option.active { background: white; color: black; transform: scale(1.05); border-color: white; }
+        
+        .reflective-preview-box {
+            width: 100%; height: 80px; border-radius: 1.2rem; margin-bottom: 1rem;
+            position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .reflective-surface-layer {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at var(--gyro-x) var(--gyro-y), rgba(255,255,255,0.7) 0%, transparent 70%);
+            mix-blend-mode: overlay; pointer-events: none;
+        }
+        .vault-lock-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; z-index: 50; }
+        .pattern-btn { flex: 1; padding: 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); font-size: 8px; font-weight: 800; text-transform: uppercase; text-align: center; transition: 0.3s; }
+        .pattern-btn.active { background: white; color: black; }
+
+        .vip-card-mockup { width: 100%; aspect-ratio: 1.58/1; border-radius: 1.4rem; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 1.25rem; box-shadow: 0 15px 30px rgba(0,0,0,0.8); }
+        .material-metal { background: linear-gradient(135deg, #1f2937 0%, #000 100%); border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -65,108 +167,197 @@
         const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
             const icons = {
                 home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
+                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM4 8v10h16V8H4z" />,
                 shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
-                palette: <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.5 2-1.2" />,
+                cpu: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM9 9h6v6H9V9z" />,
                 lock: <path d="M7 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />,
-                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />,
-                sparkles: <path d="M12 3l1.91 5.81L21 12l-7.09 3.19L12 21l-1.91-5.81L3 12l7.09-3.19z" />
+                info: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" /></React.Fragment>,
+                palette: <React.Fragment><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.5 2-1.2"/></React.Fragment>,
+                sparkles: <path d="M12 3l1.91 5.81L21 12l-7.09 3.19L12 21l-1.91-5.81L3 12l7.09-3.19zM5 5l1 1M19 5l-1 1M5 19l1-1M19 19l-1-1" />,
+                radio: <React.Fragment><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4m3.5-11.9a11 11 0 0 1 0 15.4M7.8 7.8a6 6 0 0 0 0 8.4m-3.5-11.9a11 11 0 0 0 0 15.4"/></React.Fragment>,
+                roblox_verified: <React.Fragment>
+                    <path d="M4.332 7.002L13.332 3.002C14.444 2.508 15.753 3.004 16.257 4.11L20.257 13.11C20.761 14.216 20.265 15.525 19.159 16.029L10.159 20.029C9.053 20.533 7.744 20.037 7.24 18.931L3.24 9.931C2.736 8.825 3.232 7.516 4.332 7.002Z" fill="#0084ff" />
+                    <path d="M8.5 12L10.5 14L15.5 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </React.Fragment>
             };
-            return <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
+            return <svg viewBox="0 0 24 24" fill="none" stroke={name === 'roblox_verified' ? 'none' : color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || <circle cx="12" cy="12" r="5" />}</svg>;
         };
 
         const App = () => {
-            const [activeTab, setActiveTab] = useState('home');
-            const [tamperDetected, setTamperDetected] = useState(false);
-            const [color1, setColor1] = useState('#00d2ff');
-            const [activeMaterial, setActiveMaterial] = useState('none');
+            const fbRefs = useRef({ db: null, auth: null, appId: 'edk-ultra-v117' });
+            const qrRef = useRef(null);
 
-            // --- PROTOCOLO SENTINEL (PROTECCIÓN) ---
+            const [isBooted, setIsBooted] = useState(false);
+            const [user, setUser] = useState(null);
+            const [activeTab, setActiveTab] = useState('home');
+            const [isOwner, setIsOwner] = useState(false);
+            const [showLoginModal, setShowLoginModal] = useState(true);
+            const [passInput, setPassInput] = useState('');
+            const [isPulseActive, setIsPulseActive] = useState(false);
+            const [tamperDetected, setTamperDetected] = useState(false);
+            const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
+
+            const [color1, setColor1] = useState(() => localStorage.getItem('edk_c1') || '#00d2ff');
+            const [color2, setColor2] = useState(() => localStorage.getItem('edk_c2') || '#ffffff');
+            const [activePattern, setActivePattern] = useState(() => localStorage.getItem('edk_pattern') || 'solid');
+            const [activeShape, setActiveShape] = useState(() => localStorage.getItem('edk_shape') || 'linear');
+            const [activeMaterial, setActiveMaterial] = useState(() => localStorage.getItem('edk_active_mat') || 'none');
+
+            // --- PROTOCOLO SENTINEL (PROTECCIÓN GLOBAL) ---
             useEffect(() => {
                 const triggerSentinel = () => setTamperDetected(true);
-
-                // Detección de DevTools (Cambio de tamaño de ventana interno)
                 const checkDev = () => {
-                    const diff = 160;
-                    if (window.outerWidth - window.innerWidth > diff || window.outerHeight - window.innerHeight > diff) {
-                        triggerSentinel();
-                    }
+                    const threshold = 160;
+                    if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) triggerSentinel();
                 };
-
-                // Bloqueo de Teclas y Clic Derecho
-                const handleKey = (e) => {
+                const blockKeys = (e) => {
                     if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
                         e.preventDefault();
                         triggerSentinel();
                     }
                 };
-                
                 window.addEventListener('resize', checkDev);
-                window.addEventListener('keydown', handleKey);
+                window.addEventListener('keydown', blockKeys);
                 window.addEventListener('contextmenu', (e) => e.preventDefault());
-
                 return () => {
                     window.removeEventListener('resize', checkDev);
-                    window.removeEventListener('keydown', handleKey);
+                    window.removeEventListener('keydown', blockKeys);
                 };
             }, []);
 
-            // Giroscopio para Logo Elástico
             useEffect(() => {
-                const handleMotion = (e) => {
-                    const g = e.gamma || 0;
-                    const b = e.beta || 0;
-                    document.documentElement.style.setProperty('--elastic-scale-x', 1 + Math.abs(g)/200);
-                    document.documentElement.style.setProperty('--elastic-scale-y', 1 + Math.abs(b)/200);
-                    document.documentElement.style.setProperty('--elastic-skew', `${g/10}deg`);
+                const boot = async () => {
+                    try {
+                        const config = JSON.parse(__firebase_config);
+                        const app = fb.initializeApp(config);
+                        fbRefs.current.auth = fb.getAuth(app);
+                        fbRefs.current.db = fb.getFirestore(app);
+                        await fb.signInAnonymously(fbRefs.current.auth);
+                        fb.onAuthStateChanged(fbRefs.current.auth, (u) => { if (u) { setUser(u); setIsBooted(true); } });
+                    } catch (e) { setIsBooted(true); }
                 };
-                window.addEventListener('deviceorientation', handleMotion);
-                return () => window.removeEventListener('deviceorientation', handleMotion);
+                boot();
             }, []);
+
+            useEffect(() => {
+                const handleGyro = (e) => {
+                    const gamma = e.gamma || 0;
+                    const beta = e.beta || 0;
+                    document.documentElement.style.setProperty('--gyro-x', `${(gamma + 90) / 1.8}%`);
+                    document.documentElement.style.setProperty('--gyro-y', `${(beta + 90) / 1.8}%`);
+                    document.documentElement.style.setProperty('--elastic-scale-x', 1 + (Math.abs(gamma) / 150));
+                    document.documentElement.style.setProperty('--elastic-scale-y', 1 + (Math.abs(beta) / 150));
+                    document.documentElement.style.setProperty('--elastic-skew', `${gamma / 10}deg`);
+                    if (Math.abs(gamma) > 65 && activeTab === 'vault') setIsVaultUnlocked(true);
+                };
+                window.addEventListener('deviceorientation', handleGyro);
+                return () => window.removeEventListener('deviceorientation', handleGyro);
+            }, [activeTab]);
+
+            useEffect(() => {
+                document.documentElement.style.setProperty('--dynamic-rgb', color1);
+                document.documentElement.style.setProperty('--dynamic-rgb-2', color2);
+                let pCSS = "";
+                if (activeMaterial !== 'none') {
+                    pCSS = materialStylesList[activeMaterial]?.background || "";
+                } else {
+                    if (activeShape === 'linear') {
+                        pCSS = activePattern === 'solid' ? `linear-gradient(135deg, ${color1} 0%, ${color1} 100%)` : 
+                               activePattern === 'dual' ? `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)` :
+                               `linear-gradient(135deg, ${color1} 0%, ${color2} 50%, ${color1} 100%)`;
+                    } else {
+                        pCSS = `radial-gradient(circle, ${color1} 0%, ${color2} 100%)`;
+                    }
+                }
+                document.documentElement.style.setProperty('--pattern-style', pCSS);
+                localStorage.setItem('edk_active_mat', activeMaterial);
+                localStorage.setItem('edk_c1', color1); localStorage.setItem('edk_c2', color2); 
+            }, [color1, color2, activePattern, activeShape, activeMaterial]);
+
+            const handleTabChange = (tab) => {
+                setActiveTab(tab);
+                setIsPulseActive(true);
+                setTimeout(() => setIsPulseActive(false), 600);
+            };
+
+            const materialStylesList = {
+                titanium: { background: 'linear-gradient(135deg, #374151 0%, #111827 100%)', label: 'Titanio' },
+                gold: { background: 'linear-gradient(135deg, #d4af37 0%, #8a6d3b 100%)', label: 'Oro 24K' },
+                plasma: { background: 'radial-gradient(circle at var(--gyro-x) var(--gyro-y), #fbcfe8 0%, #d946ef 40%, #701a75 100%)', label: 'Plasma Nuclear' }
+            };
 
             if (tamperDetected) return (
                 <div className="tamper-alert">
-                    <Icon name="shield" className="w-20 h-20 mb-4 animate-pulse" color="#ff0000" />
-                    <h1 className="text-2xl font-black italic uppercase">Sentinel Breach</h1>
-                    <p className="text-[10px] font-mono opacity-60">UNAUTHORIZED ENVIRONMENT DETECTED</p>
-                    <button onClick={() => window.location.reload()} className="mt-8 px-8 py-3 bg-white text-black font-black text-[9px] rounded-full">RE-BOOT SYSTEM</button>
+                    <Icon name="shield" className="w-20 h-20 mb-6 animate-pulse" color="#ff4444" />
+                    <h1 className="text-3xl font-black italic uppercase">Sentinel Breach</h1>
+                    <p className="text-[10px] font-mono opacity-50">MANIPULACIÓN DETECTADA</p>
+                    <button onClick={() => window.location.reload()} className="mt-10 px-8 py-3 bg-white text-black font-black text-[9px] rounded-full uppercase">Reiniciar</button>
+                </div>
+            );
+
+            if (!isBooted) return <div className="boot-screen"><img src="edkultra.svg" className="w-16 h-16 animate-pulse" /></div>;
+
+            if (showLoginModal) return (
+                <div className="app-container mx-auto">
+                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-3xl">
+                        <div className="tactical-module w-full max-w-[320px] h-auto p-8 text-center space-y-6 border-white/20 animate-in">
+                            <img src="edkultra.svg" className="w-16 h-16 mx-auto" />
+                            <h2 className="text-xl font-black uppercase italic tracking-tighter">Terminal Access</h2>
+                            <input type="password" placeholder="Passphrase..." value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-center font-mono outline-none" />
+                            <button onClick={() => { if(passInput === '1234') setIsOwner(true); setShowLoginModal(false); }} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Validate</button>
+                        </div>
+                    </div>
                 </div>
             );
 
             return (
-                <div className="app-container">
-                    <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5">
-                        <div>
-                            <p className="text-[7px] font-black uppercase tracking-widest text-white/30">Protocol Sentinel Active</p>
-                            <h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1>
-                        </div>
-                        <img src="edkultra.svg" className="w-8 h-8 elastic-logo" />
+                <div className={`app-container animate-in ${isPulseActive ? 'border-pulse-active' : ''}`}>
+                    <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5 flex-shrink-0">
+                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Sentinel Shield Active</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
+                        <img src="edkultra.svg" className="w-8 h-8 rounded-lg elastic-logo" />
                     </header>
 
-                    <main className="flex-1 p-6 flex flex-col justify-center">
-                        <div className="tactical-module">
-                            <div className="module-scroll-area space-y-4">
-                                <h2 className="text-lg font-black italic uppercase flex items-center gap-2">
-                                    <Icon name="shield" color={color1} /> SENTINEL STATUS
-                                </h2>
-                                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                                    <p className="text-[10px] font-bold text-green-400 uppercase">● Shield: Active</p>
-                                    <p className="text-[10px] font-bold text-blue-400 uppercase">● Anti-Debug: Monitoring</p>
-                                    <p className="text-[10px] font-bold text-white/40 uppercase">● Encryption: AES-256 Fluid</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="material-option active">Core Secure</div>
-                                    <div className="material-option" onClick={() => setActiveTab('rgb')}>Config RGB</div>
-                                </div>
+                    <main className="main-scroll-viewport">
+                        <div className="content-padding">
+                            <h2 className="text-lg font-black italic uppercase mb-4 flex items-center gap-2">
+                                <Icon name={activeTab === 'materials' ? 'sparkles' : (activeTab === 'sentinel' ? 'shield' : (activeTab === 'vault' ? 'lock' : 'cpu'))} color={color1} />
+                                {activeTab.toUpperCase()}
+                            </h2>
+
+                            <div className="tactical-module">
+                                {activeTab === 'home' && (
+                                    <div className="module-scroll-area flex flex-col items-center space-y-6 animate-in">
+                                        <div className="bg-gradient-to-br from-slate-900 to-black p-8 rounded-3xl border border-white/5 shadow-xl w-full text-center">
+                                            <h2 className="text-2xl font-black italic uppercase leading-tight">STATUS <br/> <span style={{ color: color1 }}>ONLINE</span></h2>
+                                        </div>
+                                        <div className="tactical-row"><Icon name="cpu" className="text-green-400" /> <span className="text-[9px] font-bold uppercase">Kernel: v11.7 Secure</span></div>
+                                    </div>
+                                )}
+                                {activeTab === 'rgb' && (
+                                    <div className="module-scroll-area space-y-4 animate-in">
+                                        <div className="grid grid-cols-2 gap-4 mt-2">
+                                            <div className="text-center"><p className="text-[7px] font-black uppercase opacity-40 mb-1">Color 1</p><input type="color" value={color1} onChange={(e) => setColor1(e.target.value)} className="w-full h-8 bg-transparent" /></div>
+                                            <div className="text-center"><p className="text-[7px] font-black uppercase opacity-40 mb-1">Color 2</p><input type="color" value={color2} onChange={(e) => setColor2(e.target.value)} className="w-full h-8 bg-transparent" /></div>
+                                        </div>
+                                    </div>
+                                )}
+                                {activeTab === 'sentinel' && (
+                                    <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 animate-in text-center px-6">
+                                        <Icon name="shield" className="w-16 h-16 text-blue-400 animate-pulse" />
+                                        <h3 className="text-sm font-black uppercase italic">Protocolo Sentinel</h3>
+                                        <p className="text-[8px] opacity-40 uppercase font-black">Monitoreo térmico y estructural activo. Los bordes moleculares están en modo de autorreparación.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </main>
 
                     <nav className="nav-dock-container">
                         <div className="nav-row">
-                            <button onClick={() => setActiveTab('home')} className={`nav-btn-wrapper ${activeTab === 'home' ? 'active' : ''}`}><Icon name="home" /></button>
-                            <button onClick={() => setActiveTab('rgb')} className={`nav-btn-wrapper ${activeTab === 'rgb' ? 'active' : ''}`}><Icon name="palette" /></button>
-                            <button onClick={() => setActiveTab('sentinel')} className={`nav-btn-wrapper ${activeTab === 'sentinel' ? 'active' : ''}`}><Icon name="shield" /></button>
-                            <button onClick={() => setActiveTab('vault')} className={`nav-btn-wrapper ${activeTab === 'vault' ? 'active' : ''}`}><Icon name="lock" /></button>
+                            <button onClick={() => handleTabChange('rgb')} className={`nav-btn-wrapper ${activeTab === 'rgb' ? 'active' : ''}`}><Icon name="palette" /></button>
+                            <button onClick={() => handleTabChange('home')} className={`nav-btn-wrapper ${activeTab === 'home' ? 'active' : ''}`}><Icon name="home" /></button>
+                            <button onClick={() => handleTabChange('sentinel')} className={`nav-btn-wrapper ${activeTab === 'sentinel' ? 'active' : ''}`}><Icon name="shield" /></button>
+                            <button onClick={() => handleTabChange('vault')} className={`nav-btn-wrapper ${activeTab === 'vault' ? 'active' : ''}`}><Icon name="lock" /></button>
                         </div>
                     </nav>
                 </div>
