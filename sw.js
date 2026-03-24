@@ -3,7 +3,7 @@ const CACHE_NAME = 'edk-ultra-v11.8-forge';
 const ASSETS = [
   './',
   './index.html',
-  './EDKSOFFICIALLOGO.jpg',
+  './EDKSOFFICIALLOGO.png',
   // Si tienes un manifest.json, asegúrate de que el nombre coincida aquí:
   './manifest.json' 
 ];
