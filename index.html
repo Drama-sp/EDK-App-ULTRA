@@ -3,97 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title id="app-title">EDK APP ULTRA Pro - v11.7 Fluid Forge</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="edkultra.svg">
-    <link rel="apple-touch-icon" href="edkultra.svg">
-    <meta name="theme-color" content="#020617">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>EDK APP ULTRA Pro - v11.8 Fluid Forge</title>
+    
+    <!-- Configuración para GitHub y PWA -->
+    <link rel="icon" type="image/jpeg" href="./EDKSOFFICIALLOGO.jpg">
+    <link rel="apple-touch-icon" href="./EDKSOFFICIALLOGO.jpg">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        window.fb = { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, serverTimestamp };
-    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap');
+        
         :root {
-            --gloss-angle: 135deg; --dynamic-rgb: #00d2ff; --dynamic-rgb-2: #ffffff; --rgb-values: 0, 210, 255;
+            --gloss-angle: 135deg; 
+            --dynamic-rgb: #00d2ff; 
+            --dynamic-rgb-2: #ffffff; 
+            --rgb-values: 0, 210, 255;
             --pattern-style: linear-gradient(var(--gloss-angle), var(--dynamic-rgb) 0%, var(--dynamic-rgb-2) 100%);
-            --gyro-x: 50%; --gyro-y: 50%; --border-width: 14px; --elastic-scale-x: 1; --elastic-scale-y: 1; --elastic-skew: 0deg;
+            --gyro-x: 50%; --gyro-y: 50%; 
+            --border-width: 12px; 
+            --elastic-scale-x: 1; --elastic-scale-y: 1; --elastic-skew: 0deg;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; margin: 0; overflow: hidden; color: white; display: flex; justify-content: center; align-items: center; height: 100dvh; width: 100vw; }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none; 
+            user-select: none; 
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #000; 
+            margin: 0; 
+            overflow: hidden; 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            width: 100vw; 
+        }
+
         .app-container { 
-            position: relative; width: 100vw; height: 100dvh;
+            position: relative; 
+            width: 100vw; 
+            height: 100vh;
             background-image: linear-gradient(#020617, #020617), var(--pattern-style);
-            background-origin: border-box; background-clip: padding-box, border-box;
-            border: var(--border-width) solid transparent; border-radius: 2.8rem;
-            box-shadow: inset 0 0 30px rgba(0,0,0,1); transition: all 0.4s; overflow: hidden; display: flex; flex-direction: column;
+            background-origin: border-box; 
+            background-clip: padding-box, border-box;
+            border: var(--border-width) solid transparent; 
+            border-radius: 2rem;
+            box-shadow: inset 0 0 30px rgba(0,0,0,1); 
+            transition: all 0.4s; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column;
         }
-        @media (min-width: 1024px) { :root { --border-width: 18px; } .app-container { max-width: 395px; max-height: 854px; border-radius: 3.8rem; } }
-        .elastic-logo { transition: transform 0.1s ease-out; transform: scale(var(--elastic-scale-x), var(--elastic-scale-y)) skew(var(--elastic-skew)); filter: drop-shadow(0 0 10px var(--dynamic-rgb)); }
-        .border-pulse-active { animation: border-glow-pulse 0.6s forwards; }
-        @keyframes border-glow-pulse { 0% { filter: brightness(1); } 30% { filter: brightness(2.5) saturate(1.5); } 100% { filter: brightness(1); } }
-        .tactical-module { width: 100%; height: 420px; background: rgba(0, 0, 0, 0.85); border: 1.5px solid var(--dynamic-rgb); box-shadow: 0 0 25px rgba(var(--rgb-values), 0.15), inset 0 0 15px rgba(var(--rgb-values), 0.05); border-radius: 2.2rem; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: all 0.5s ease; backdrop-filter: blur(10px); }
-        .module-scroll-area { flex: 1; overflow-y: auto; padding: 1.25rem; touch-action: pan-y; }
+
+        @media (min-width: 768px) { 
+            :root { --border-width: 16px; } 
+            .app-container { 
+                max-width: 400px; 
+                height: 850px; 
+                border-radius: 3.5rem; 
+            } 
+        }
+
+        .elastic-logo { 
+            transition: transform 0.1s ease-out; 
+            transform: scale(var(--elastic-scale-x), var(--elastic-scale-y)) skew(var(--elastic-skew)); 
+            filter: drop-shadow(0 0 10px var(--dynamic-rgb)); 
+        }
+
+        .border-pulse-active { animation: border-glow-pulse 0.8s ease-in-out; }
+        @keyframes border-glow-pulse { 
+            0% { filter: brightness(1); } 
+            50% { filter: brightness(2) saturate(1.5); } 
+            100% { filter: brightness(1); } 
+        }
+
+        .tactical-module { 
+            width: 100%; 
+            height: 400px; 
+            background: rgba(0, 0, 0, 0.8); 
+            border: 1px solid rgba(var(--rgb-values), 0.3); 
+            box-shadow: 0 0 20px rgba(var(--rgb-values), 0.1), inset 0 0 10px rgba(var(--rgb-values), 0.05); 
+            border-radius: 2rem; 
+            position: relative; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            transition: all 0.5s ease; 
+            backdrop-filter: blur(12px); 
+        }
+
+        .module-scroll-area { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 1.5rem; 
+            scrollbar-width: none;
+        }
         .module-scroll-area::-webkit-scrollbar { display: none; }
-        .main-scroll-viewport { flex: 1; overflow: hidden; position: relative; z-index: 10; display: flex; flex-direction: column; }
-        .content-padding { flex: 1; padding: 1.25rem; display: flex; flex-direction: column; justify-content: center; }
-        .nav-dock-container { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #020617 95%, transparent); padding: 8px 0 24px 0; z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-        .nav-row { display: flex; justify-content: space-around; width: 100%; padding: 0 0.5rem; }
-        .nav-btn-wrapper { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(35px); border-radius: 1.1rem; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer; }
-        .nav-btn-wrapper.active { background: white; transform: translateY(-3px) scale(1.1); box-shadow: 0 0 15px var(--dynamic-rgb); }
-        .nav-btn-wrapper.active svg { stroke: #000; }
-        .tactical-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; width: 100%; }
-        .tamper-alert { position: fixed; inset: 0; background: #7f1d1d; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; font-family: 'Plus Jakarta Sans', sans-serif; }
-        .boot-screen { position: fixed; inset: 0; background: #020617; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--dynamic-rgb); font-family: 'JetBrains Mono', monospace; }
-        .material-option { padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; text-align: center; transition: 0.3s; }
-        .material-option.active { background: white; color: black; transform: scale(1.05); border-color: white; }
-        .reflective-preview-box { width: 100%; height: 80px; border-radius: 1.2rem; margin-bottom: 1rem; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
-        .reflective-surface-layer { position: absolute; inset: 0; background: radial-gradient(circle at var(--gyro-x) var(--gyro-y), rgba(255,255,255,0.7) 0%, transparent 70%); mix-blend-mode: overlay; pointer-events: none; }
-        .vault-lock-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; z-index: 50; }
-        .pattern-btn { flex: 1; padding: 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); font-size: 8px; font-weight: 800; text-transform: uppercase; text-align: center; transition: 0.3s; }
-        .pattern-btn.active { background: white; color: black; }
-        .sonic-bar { width: 3px; height: 10px; background: var(--dynamic-rgb); border-radius: 2px; }
-        .sonic-active .sonic-bar { animation: sonic-pulse 0.5s ease-in-out infinite alternate; }
-        @keyframes sonic-pulse { from { height: 10px; opacity: 0.3; } to { height: 30px; opacity: 1; } }
-        .vip-card-mockup { width: 100%; aspect-ratio: 1.58/1; border-radius: 1.4rem; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 1.25rem; box-shadow: 0 15px 30px rgba(0,0,0,0.8); }
-        .material-metal { background: linear-gradient(135deg, #1f2937 0%, #000 100%); border: 1px solid rgba(255,255,255,0.2); }
+
+        .nav-dock-container { 
+            padding: 1rem 0.5rem 2rem 0.5rem;
+            background: linear-gradient(to top, #020617 80%, transparent);
+            z-index: 50;
+        }
+
+        .nav-btn-wrapper { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(10px); 
+            border-radius: 1rem; 
+            width: 45px; 
+            height: 45px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            cursor: pointer; 
+        }
+
+        .nav-btn-wrapper.active { 
+            background: white; 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 20px rgba(var(--rgb-values), 0.4); 
+        }
+        .nav-btn-wrapper.active svg { color: #000 !important; }
+
+        .tactical-row { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            padding: 14px; 
+            background: rgba(255, 255, 255, 0.03); 
+            border-radius: 1rem; 
+            border: 1px solid rgba(255,255,255,0.05); 
+            margin-bottom: 10px; 
+        }
+
+        .material-option { 
+            padding: 15px 10px; 
+            border-radius: 1rem; 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            font-size: 10px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            cursor: pointer; 
+            text-align: center; 
+            transition: 0.2s; 
+        }
+        .material-option.active { 
+            background: white; 
+            color: black; 
+            transform: scale(1.02); 
+        }
+
+        .sonic-bar { 
+            width: 4px; 
+            height: 12px; 
+            background: var(--dynamic-rgb); 
+            border-radius: 2px; 
+            margin: 0 2px;
+        }
+        .sonic-active .sonic-bar { animation: sonic-pulse 0.6s ease-in-out infinite alternate; }
+        @keyframes sonic-pulse { 
+            from { height: 8px; opacity: 0.3; } 
+            to { height: 32px; opacity: 1; } 
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.FirebaseSDK = { 
+            initializeApp, getAuth, signInAnonymously, onAuthStateChanged, 
+            signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, 
+            collection, query, addDoc, serverTimestamp 
+        };
+    </script>
+
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
-        const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
-            const icons = {
-                home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
-                id: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM4 8v10h16V8H4z" />,
-                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
-                cpu: <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM9 9h6v6H9V9z" />,
-                lock: <path d="M7 11V7a5 5 0 0 1 10 0v4M3 11h18v11H3z" />,
-                info: <React.Fragment><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" /></React.Fragment>,
-                palette: <React.Fragment><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.5 2-1.2"/></React.Fragment>,
-                sparkles: <path d="M12 3l1.91 5.81L21 12l-7.09 3.19L12 21l-1.91-5.81L3 12l7.09-3.19zM5 5l1 1M19 5l-1 1M5 19l1-1M19 19l-1-1" />,
-                radio: <React.Fragment><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4m3.5-11.9a11 11 0 0 1 0 15.4M7.8 7.8a6 6 0 0 0 0 8.4m-3.5-11.9a11 11 0 0 0 0 15.4"/></React.Fragment>,
-                roblox_verified: <React.Fragment>
-                    <path d="M4.332 7.002L13.332 3.002C14.444 2.508 15.753 3.004 16.257 4.11L20.257 13.11C20.761 14.216 20.265 15.525 19.159 16.029L10.159 20.029C9.053 20.533 7.744 20.037 7.24 18.931L3.24 9.931C2.736 8.825 3.232 7.516 4.332 7.002Z" fill="#0084ff" />
-                    <path d="M8.5 12L10.5 14L15.5 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </React.Fragment>
-            };
-            return <svg viewBox="0 0 24 24" fill="none" stroke={name === 'roblox_verified' ? 'none' : color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || <circle cx="12" cy="12" r="5" />}</svg>;
+
+        /**
+         * Componente EDKLogo optimizado para GitHub
+         * Utiliza rutas relativas y maneja errores de carga.
+         */
+        const EDKLogo = ({ className = "w-8 h-8", style = {} }) => {
+            const [hasError, setHasError] = useState(false);
+
+            if (hasError) {
+                // Icono de respaldo si la imagen falla
+                return (
+                    <div className={`${className} bg-slate-800 rounded-md flex items-center justify-center border border-white/10`} style={style}>
+                        <i data-lucide="shield" className="text-white/40 w-1/2 h-1/2"></i>
+                    </div>
+                );
+            }
+
+            return (
+                <img 
+                    src="./EDKSOFFICIALLOGO.jpg" 
+                    className={`${className} object-contain rounded-md`} 
+                    alt="EDK Studios Logo"
+                    style={style}
+                    onError={() => setHasError(true)}
+                />
+            );
+        };
+
+        const Icon = ({ name, size = 20, className = "" }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
         };
 
         const App = () => {
-            const fbRefs = useRef({ db: null, auth: null });
-            const qrRef = useRef(null);
+            const [user, setUser] = useState(null);
             const [isBooted, setIsBooted] = useState(false);
             const [activeTab, setActiveTab] = useState('home');
             const [showLoginModal, setShowLoginModal] = useState(true);
@@ -101,92 +248,289 @@
             const [isPulseActive, setIsPulseActive] = useState(false);
             const [tamperDetected, setTamperDetected] = useState(false);
             const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
+            
             const [color1, setColor1] = useState(() => localStorage.getItem('edk_c1') || '#00d2ff');
             const [color2, setColor2] = useState(() => localStorage.getItem('edk_c2') || '#ffffff');
-            const [activePattern, setActivePattern] = useState(() => localStorage.getItem('edk_pattern') || 'solid');
             const [activeShape, setActiveShape] = useState(() => localStorage.getItem('edk_shape') || 'linear');
             const [activeMaterial, setActiveMaterial] = useState(() => localStorage.getItem('edk_active_mat') || 'none');
+
             const materialStylesList = {
-                titanium: { background: 'linear-gradient(135deg, #374151 0%, #111827 100%)', label: 'Titanio' },
+                titanium: { background: 'linear-gradient(135deg, #374151 0%, #111827 100%)', label: 'Titanio G5' },
                 gold: { background: 'linear-gradient(135deg, #d4af37 0%, #8a6d3b 100%)', label: 'Oro 24K' },
-                water: { background: 'radial-gradient(circle at var(--gyro-x) var(--gyro-y), #e0f2fe 0%, #0ea5e9 60%, #0369a1 100%)', label: 'Agua Táctica' },
-                plasma: { background: 'radial-gradient(circle at var(--gyro-x) var(--gyro-y), #fbcfe8 0%, #d946ef 40%, #701a75 100%)', label: 'Plasma Nuclear' },
-                blue_crystal: { background: 'radial-gradient(circle at var(--gyro-x) var(--gyro-y), #60a5fa 0%, #1d4ed8 50%, #1e3a8a 100%)', label: 'Cristal Azul' },
-                carbon: { background: 'repeating-linear-gradient(45deg, #111 0px, #111 2px, #222 2px, #222 4px)', label: 'Carbono' }
+                carbon: { background: 'repeating-linear-gradient(45deg, #111 0px, #111 2px, #222 2px, #222 4px)', label: 'Fibra Carbono' },
+                plasma: { background: 'radial-gradient(circle at var(--gyro-x) var(--gyro-y), #fbcfe8 0%, #d946ef 40%, #701a75 100%)', label: 'Plasma' },
+                neon: { background: 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)', label: 'Bio Neon' }
             };
 
-            // PROTOCOLO SENTINEL WATCHDOG
             useEffect(() => {
-                const trigger = () => setTamperDetected(true);
-                const check = () => { if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) trigger(); };
-                const blockKeys = (e) => { if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) { e.preventDefault(); trigger(); } };
-                window.addEventListener('resize', check);
-                window.addEventListener('keydown', blockKeys);
-                window.addEventListener('contextmenu', (e) => e.preventDefault());
-                const boot = async () => { try { const config = JSON.parse(__firebase_config); const app = fb.initializeApp(config); fbRefs.current.auth = fb.getAuth(app); fbRefs.current.db = fb.getFirestore(app); await fb.signInAnonymously(fbRefs.current.auth); setIsBooted(true); } catch (e) { setIsBooted(true); } };
-                boot();
-                return () => { window.removeEventListener('resize', check); window.removeEventListener('keydown', blockKeys); };
+                const initFirebase = async () => {
+                    if (!window.FirebaseSDK) {
+                        setTimeout(initFirebase, 500);
+                        return;
+                    }
+
+                    const { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } = window.FirebaseSDK;
+                    
+                    try {
+                        const firebaseConfig = JSON.parse(__firebase_config);
+                        const app = initializeApp(firebaseConfig);
+                        const auth = getAuth(app);
+                        
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+
+                        onAuthStateChanged(auth, (u) => {
+                            setUser(u);
+                            setIsBooted(true);
+                        });
+                    } catch (e) {
+                        setIsBooted(true);
+                    }
+                };
+
+                initFirebase();
             }, []);
 
             useEffect(() => {
-                const handleGyro = (e) => {
-                    const gx = (e.gamma + 90) / 1.8; const gy = (e.beta + 90) / 1.8;
-                    document.documentElement.style.setProperty('--gyro-x', `${gx}%`); document.documentElement.style.setProperty('--gyro-y', `${gy}%`);
-                    document.documentElement.style.setProperty('--elastic-scale-x', 1 + (Math.abs(e.gamma) / 150));
-                    document.documentElement.style.setProperty('--elastic-scale-y', 1 + (Math.abs(e.beta) / 150));
-                    document.documentElement.style.setProperty('--elastic-skew', `${e.gamma / 10}deg`);
-                    if (Math.abs(e.gamma) > 65 && activeTab === 'vault') setIsVaultUnlocked(true);
+                const handleOrientation = (e) => {
+                    const x = (e.gamma || 0);
+                    const y = (e.beta || 0);
+                    const gx = (x + 90) / 1.8;
+                    const gy = (y + 90) / 1.8;
+                    
+                    document.documentElement.style.setProperty('--gyro-x', `${gx}%`);
+                    document.documentElement.style.setProperty('--gyro-y', `${gy}%`);
+                    
+                    if (Math.abs(x) > 50 && activeTab === 'vault') {
+                        setIsVaultUnlocked(true);
+                    }
                 };
-                window.addEventListener('deviceorientation', handleGyro);
-                return () => window.removeEventListener('deviceorientation', handleGyro);
+                window.addEventListener('deviceorientation', handleOrientation);
+                return () => window.removeEventListener('deviceorientation', handleOrientation);
             }, [activeTab]);
 
             useEffect(() => {
                 document.documentElement.style.setProperty('--dynamic-rgb', color1);
                 document.documentElement.style.setProperty('--dynamic-rgb-2', color2);
-                let pCSS = activeMaterial !== 'none' ? materialStylesList[activeMaterial].background : (activeShape === 'linear' ? `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)` : `radial-gradient(circle, ${color1}, ${color2})`);
-                document.documentElement.style.setProperty('--pattern-style', pCSS);
-                localStorage.setItem('edk_active_mat', activeMaterial); localStorage.setItem('edk_c1', color1); localStorage.setItem('edk_c2', color2);
-            }, [color1, color2, activePattern, activeShape, activeMaterial]);
+                
+                let style = activeMaterial !== 'none' 
+                    ? materialStylesList[activeMaterial].background 
+                    : (activeShape === 'linear' 
+                        ? `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)` 
+                        : `radial-gradient(circle, ${color1}, ${color2})`);
+                
+                document.documentElement.style.setProperty('--pattern-style', style);
+                localStorage.setItem('edk_active_mat', activeMaterial);
+                localStorage.setItem('edk_c1', color1);
+                localStorage.setItem('edk_c2', color2);
+            }, [color1, color2, activeShape, activeMaterial]);
 
-            const handleTabChange = (t) => { setActiveTab(t); setIsPulseActive(true); setTimeout(() => setIsPulseActive(false), 600); };
+            const changeTab = (t) => {
+                setActiveTab(t);
+                setIsPulseActive(true);
+                setTimeout(() => setIsPulseActive(false), 800);
+            };
 
-            if (tamperDetected) return <div className="tamper-alert"><Icon name="shield" className="w-20 h-20 mb-4 animate-bounce" color="#ff4444" /><h1 className="text-3xl font-black italic">SENTINEL BREACH</h1><p className="text-xs font-mono mt-4 uppercase opacity-70">Unauthorized Debugging Detected</p><button onClick={() => window.location.reload()} className="mt-8 px-6 py-2 border border-white/20 rounded-full text-[10px] font-bold">RE-AUTHENTICATE</button></div>;
-            if (!isBooted) return <div className="boot-screen"><img src="edkultra.svg" className="w-16 h-16 animate-pulse" /></div>;
-            if (showLoginModal) return <div className="app-container mx-auto"><div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-3xl"><div className="tactical-module w-full max-w-[320px] h-auto p-8 text-center space-y-6 border-white/20 animate-in"><img src="edkultra.svg" className="w-16 h-16 mx-auto" /><h2 className="text-xl font-black uppercase italic tracking-tighter">Terminal Access</h2><input type="password" placeholder="Passphrase..." value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-center font-mono outline-none" /><button onClick={() => { if(passInput === '1234') setShowLoginModal(false); }} className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase shadow-2xl">Validate</button></div></div></div>;
+            if (tamperDetected) {
+                return (
+                    <div className="flex flex-col items-center justify-center h-screen bg-red-950 text-white p-10 text-center">
+                        <Icon name="shield-alert" size={80} className="text-red-500 mb-6 animate-pulse" />
+                        <h1 className="text-4xl font-black italic mb-4">SENTINEL BREACH</h1>
+                        <button onClick={() => window.location.reload()} className="mt-10 px-8 py-3 border border-white/20 rounded-full font-bold">REBOOT SYSTEM</button>
+                    </div>
+                );
+            }
+
+            if (!isBooted) {
+                return (
+                    <div className="flex flex-col items-center justify-center h-screen bg-slate-950">
+                        <div className="animate-pulse mb-6"><EDKLogo className="w-24 h-24" /></div>
+                        <p className="font-mono text-[10px] tracking-[0.3em] text-white/30">INITIALIZING CORE...</p>
+                    </div>
+                );
+            }
+
+            if (showLoginModal) {
+                return (
+                    <div className="app-container">
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-950/90 backdrop-blur-3xl z-[100]">
+                            <EDKLogo className="w-32 h-32 mb-12 shadow-2xl" />
+                            <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-8">Secure Terminal</h2>
+                            <div className="w-full space-y-4">
+                                <input 
+                                    type="password" 
+                                    placeholder="Passphrase..." 
+                                    value={passInput}
+                                    onChange={(e) => setPassInput(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-center font-mono text-xl focus:border-white/30 transition-all"
+                                />
+                                <button 
+                                    onClick={() => { if(passInput === '1234') setShowLoginModal(false); }}
+                                    className="w-full bg-white text-black py-5 rounded-2xl font-black text-sm uppercase shadow-xl active:scale-95 transition-transform"
+                                >
+                                    Authenticate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
 
             return (
-                <div className={`app-container animate-in ${isPulseActive ? 'border-pulse-active' : ''}`}>
-                    <header className="h-20 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-6 pt-4 border-b border-white/5 flex-shrink-0">
-                        <div><p className="text-[7px] font-black uppercase tracking-widest text-white/30">Molecular Fluid Chasis</p><h1 className="text-md font-extrabold italic uppercase leading-none">EDK ULTRA</h1></div>
-                        <img src="edkultra.svg" className="w-8 h-8 rounded-lg elastic-logo" />
+                <div className={`app-container ${isPulseActive ? 'border-pulse-active' : ''}`}>
+                    {/* Header */}
+                    <header className="h-24 bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 pt-6 border-b border-white/5">
+                        <div>
+                            <p className="text-[8px] font-black uppercase tracking-widest text-white/30 mb-1">Fluid Forge Chassis</p>
+                            <h1 className="text-xl font-extrabold italic uppercase leading-none tracking-tighter">EDK <span style={{ color: color1 }}>ULTRA</span></h1>
+                        </div>
+                        <div className="elastic-logo"><EDKLogo className="w-12 h-12" /></div>
                     </header>
-                    <main className="main-scroll-viewport">
-                        <div className="content-padding">
-                            <h2 className="text-lg font-black italic uppercase mb-4 flex items-center gap-2"><Icon name={activeTab === 'materials' ? 'sparkles' : (activeTab === 'sentinel' ? 'shield' : (activeTab === 'vault' ? 'lock' : 'cpu'))} color={color1} />{activeTab.toUpperCase()}</h2>
-                            <div className="tactical-module">
-                                {activeTab === 'home' && <div className="module-scroll-area flex flex-col items-center space-y-6 animate-in"><div className="bg-gradient-to-br from-slate-900 to-black p-8 rounded-3xl border border-white/5 shadow-xl w-full text-center"><h2 className="text-2xl font-black italic uppercase leading-tight">STATUS <br/> <span style={{ color: color1 }}>ONLINE</span></h2></div><div className="tactical-row"><Icon name="cpu" className="text-green-400" /> <span className="text-[9px] font-bold uppercase">Kernel: v11.7 Fluid Engine</span></div></div>}
-                                {activeTab === 'materials' && <div className="module-scroll-area animate-in"><div className="reflective-preview-box"><div className="absolute inset-0" style={{ background: activeMaterial === 'none' ? color1 : materialStylesList[activeMaterial].background }}></div><div className="reflective-surface-layer"></div></div><div className="grid grid-cols-2 gap-2">{Object.keys(materialStylesList).map(m => (<div key={m} onClick={() => setActiveMaterial(m)} className={`material-option ${activeMaterial === m ? 'active' : ''}`}>{materialStylesList[m].label}</div>))}</div></div>}
-                                {activeTab === 'rgb' && <div className="module-scroll-area space-y-4 animate-in"><div className="grid grid-cols-3 gap-2">{['linear', 'radial', 'conic'].map(s => (<button key={s} onClick={() => { setActiveShape(s); setActiveMaterial('none'); }} className={`pattern-btn ${activeShape === s ? 'active' : ''}`}>{s.toUpperCase()}</button>))}</div><div className="grid grid-cols-2 gap-4 mt-2"><input type="color" value={color1} onChange={(e) => setColor1(e.target.value)} className="w-full h-8 bg-transparent" /><input type="color" value={color2} onChange={(e) => setColor2(e.target.value)} className="w-full h-8 bg-transparent" /></div></div>}
-                                {activeTab === 'ranking' && <div className="module-scroll-area animate-in">{[1,2,3,5,10].map(i => (<div key={i} className="tactical-row"><div className="w-8 h-8 bg-white/10 rounded-full overflow-hidden"><img src={`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${i*1000}&size=150x150&format=Png`} /></div><div className="flex-1 text-xs font-bold truncate">Elite_Agent_{i}</div><span className="text-[10px] font-black opacity-20">#{i}</span></div>))}</div>}
-                                {activeTab === 'vault' && <div className="relative w-full h-full">{!isVaultUnlocked ? <div className="vault-lock-overlay"><Icon name="cpu" className="w-12 h-12 mb-4 text-white/40 animate-pulse" /><h3 className="text-sm font-black uppercase italic">Impacto Kinético</h3><p className="text-[8px] opacity-40 uppercase font-black">Agita para abrir</p></div> : <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 text-center animate-in"><Icon name="roblox_verified" className="w-16 h-16" color="#f9d423" /><h3 className="text-lg font-black italic uppercase text-yellow-400">Bóveda Abierta</h3><button onClick={() => setIsVaultUnlocked(false)} className="text-[7px] opacity-30 font-bold uppercase">Cerrar</button></div>}</div>}
-                                {activeTab === 'identity' && <div className="module-scroll-area flex flex-col justify-center items-center space-y-6 animate-in"><div className="vip-card-mockup material-metal"><img src="edkultra.svg" className="w-8 h-8 opacity-40" /><div className="mt-auto"><h3 className="text-sm font-black italic uppercase tracking-tighter">AGENTE EDK</h3><Icon name="roblox_verified" className="w-6 h-6 ml-auto" /></div></div></div>}
-                                {activeTab === 'sentinel' && <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 animate-in text-center px-6"><Icon name="shield" className="w-16 h-16 text-blue-400 animate-pulse" /><h3 className="text-sm font-black uppercase italic">Protocolo Sentinel</h3><p className="text-[8px] opacity-40 uppercase font-black">Monitoreo térmico y estructural activo.</p></div>}
-                                {activeTab === 'sonic' && <div className="module-scroll-area flex flex-col items-center justify-center space-y-6 animate-in"><div className="sonic-wave sonic-active">{[1,2,3,4,5,6,7].map(i => <div key={i} className="sonic-bar"></div>)}</div><p className="text-[9px] font-black uppercase opacity-50">Transmisión de Datos por Pulso</p></div>}
+
+                    {/* Main Viewport */}
+                    <main className="flex-1 overflow-hidden relative">
+                        <div className="h-full flex flex-col p-6 overflow-y-auto">
+                            <div className="flex items-center gap-3 mb-6">
+                                <Icon name={
+                                    activeTab === 'home' ? 'layout-grid' : 
+                                    activeTab === 'materials' ? 'layers' : 
+                                    activeTab === 'rgb' ? 'palette' : 
+                                    activeTab === 'vault' ? 'lock' : 'info'
+                                } className="text-white" color={color1} />
+                                <h2 className="text-xl font-black italic uppercase tracking-tighter">{activeTab}</h2>
+                            </div>
+
+                            <div className="tactical-module flex-1">
+                                <div className="module-scroll-area">
+                                    {activeTab === 'home' && (
+                                        <div className="space-y-6 animate-in fade-in duration-500">
+                                            <div className="glass-panel p-8 text-center">
+                                                <h3 className="text-3xl font-black italic mb-2">SYSTEM</h3>
+                                                <div className="text-5xl font-black italic tracking-tighter" style={{ color: color1 }}>ONLINE</div>
+                                            </div>
+                                            <div className="tactical-row">
+                                                <Icon name="cpu" className="text-blue-400" />
+                                                <div className="flex-1">
+                                                    <p className="text-[10px] font-bold opacity-40 uppercase">Kernel</p>
+                                                    <p className="text-xs font-black">v11.8 FLUID ENGINE</p>
+                                                </div>
+                                            </div>
+                                            <div className="tactical-row">
+                                                <Icon name="database" className="text-purple-400" />
+                                                <div className="flex-1">
+                                                    <p className="text-[10px] font-bold opacity-40 uppercase">User UID</p>
+                                                    <p className="text-[8px] font-mono break-all">{user?.uid || 'GUEST_000'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'materials' && (
+                                        <div className="space-y-4">
+                                            <div className="h-24 rounded-2xl mb-6 relative overflow-hidden border border-white/10" style={{ background: activeMaterial === 'none' ? color1 : materialStylesList[activeMaterial].background }}>
+                                                <div className="absolute inset-0 bg-white/10 mix-blend-overlay" style={{ background: `radial-gradient(circle at var(--gyro-x) var(--gyro-y), white 0%, transparent 60%)` }}></div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div onClick={() => setActiveMaterial('none')} className={`material-option ${activeMaterial === 'none' ? 'active' : ''}`}>Estandar</div>
+                                                {Object.entries(materialStylesList).map(([key, value]) => (
+                                                    <div key={key} onClick={() => setActiveMaterial(key)} className={`material-option ${activeMaterial === key ? 'active' : ''}`}>
+                                                        {value.label}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'rgb' && (
+                                        <div className="space-y-8">
+                                            <div className="flex gap-2">
+                                                {['linear', 'radial'].map(s => (
+                                                    <button key={s} onClick={() => setActiveShape(s)} className={`flex-1 py-3 rounded-xl font-bold text-[10px] uppercase border transition-all ${activeShape === s ? 'bg-white text-black border-white' : 'border-white/10 text-white/40'}`}>
+                                                        {s}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="space-y-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase opacity-40 tracking-widest">Master Tone</label>
+                                                    <input type="color" value={color1} onChange={(e) => setColor1(e.target.value)} className="w-full h-14 rounded-xl bg-transparent cursor-pointer border-none" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase opacity-40 tracking-widest">Secondary Accent</label>
+                                                    <input type="color" value={color2} onChange={(e) => setColor2(e.target.value)} className="w-full h-14 rounded-xl bg-transparent cursor-pointer border-none" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'vault' && (
+                                        <div className="h-full flex items-center justify-center">
+                                            {!isVaultUnlocked ? (
+                                                <div className="text-center space-y-4">
+                                                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                                                        <Icon name="lock" size={32} className="text-white/20" />
+                                                    </div>
+                                                    <h3 className="font-black uppercase italic text-sm">Bloqueo Cinético</h3>
+                                                    <p className="text-[9px] opacity-40 font-bold uppercase">Agita para abrir la bóveda</p>
+                                                </div>
+                                            ) : (
+                                                <div className="text-center animate-in zoom-in duration-500">
+                                                    <Icon name="unlock" size={60} className="mx-auto mb-4 text-green-400" />
+                                                    <h3 className="text-2xl font-black italic uppercase text-green-400">Acceso VIP</h3>
+                                                    <p className="text-[10px] mt-4 opacity-60 font-mono">EDK STUDIOS SECURE ASSETS LOADED</p>
+                                                    <button onClick={() => setIsVaultUnlocked(false)} className="mt-8 text-[9px] font-black underline opacity-30">Cerrar Sesión</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'info' && (
+                                        <div className="space-y-6">
+                                            <div className="sonic-active flex justify-center py-10">
+                                                {[1,2,3,4,5,6,7,8,9,10].map(i => <div key={i} className="sonic-bar" style={{ animationDelay: `${i * 0.1}s` }}></div>)}
+                                            </div>
+                                            <div className="glass-panel p-6 space-y-4">
+                                                <h4 className="font-black italic text-xs uppercase tracking-widest">Terminal Information</h4>
+                                                <div className="grid grid-cols-2 gap-4 text-[9px] font-mono">
+                                                    <div className="opacity-40">REPO</div><div>GITHUB_EDK_v11</div>
+                                                    <div className="opacity-40">BUILD</div><div>PRODUCTION_STABLE</div>
+                                                    <div className="opacity-40">IMAGE_REF</div><div>LOCAL_RELATIVE</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </main>
+
+                    {/* Navigation Dock */}
                     <nav className="nav-dock-container">
-                        <div className="nav-row">
-                            {['rgb', 'home', 'ranking', 'info', 'sentinel'].map(t => <button key={t} onClick={() => handleTabChange(t)} className={`nav-btn-wrapper ${activeTab === t ? 'active' : ''}`}><Icon name={t === 'ranking' ? 'roblox_verified' : t} /></button>)}
-                        </div>
-                        <div className="nav-row">
-                            {['vault', 'materials', 'identity', 'sonic'].map(t => <button key={t} onClick={() => handleTabChange(t)} className={`nav-btn-wrapper ${activeTab === t ? 'active' : ''}`}><Icon name={t === 'materials' ? 'sparkles' : (t === 'sonic' ? 'radio' : t)} /></button>)}
+                        <div className="flex justify-around items-center px-4 max-w-sm mx-auto">
+                            {[
+                                { id: 'home', icon: 'home' },
+                                { id: 'materials', icon: 'layers' },
+                                { id: 'rgb', icon: 'palette' },
+                                { id: 'vault', icon: 'lock' },
+                                { id: 'info', icon: 'zap' }
+                            ].map(item => (
+                                <button 
+                                    key={item.id} 
+                                    onClick={() => changeTab(item.id)}
+                                    className={`nav-btn-wrapper ${activeTab === item.id ? 'active' : ''}`}
+                                >
+                                    <Icon name={item.icon} size={22} className={activeTab === item.id ? 'text-black' : 'text-white/40'} />
+                                </button>
+                            ))}
                         </div>
                     </nav>
                 </div>
             );
         };
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
