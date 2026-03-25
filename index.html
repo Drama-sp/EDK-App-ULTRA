@@ -441,7 +441,8 @@
                                     activeTab === 'home' ? 'layout-grid' : 
                                     activeTab === 'materials' ? 'layers' : 
                                     activeTab === 'rgb' ? 'palette' : 
-                                    activeTab === 'vault' ? 'lock' : 'info'
+                                    activeTab === 'vault' ? 'lock' : 
+                                    activeTab === 'team' ? 'users' : 'info'
                                 } className="text-white" color={color1} />
                                 <h2 className="text-xl font-black italic uppercase tracking-tighter">{activeTab}</h2>
                             </div>
@@ -451,7 +452,7 @@
                                     {activeTab === 'home' && (
                                         <div className="space-y-6 animate-in fade-in duration-500">
                                             <div className="glass-panel p-10 text-center">
-                                                <h3 className="text-3xl font-black italic mb-2">SYSTEM STATUS</h3>
+                                                <h3 className="text-3xl font-black italic mb-2">SYSTEM</h3>
                                                 <div className="text-5xl font-black italic tracking-tighter" style={{ color: color1 }}>ONLINE</div>
                                             </div>
                                             
@@ -526,6 +527,42 @@
                                         </div>
                                     )}
 
+                                    {activeTab === 'team' && (
+                                        <div className="space-y-6 animate-in fade-in duration-500">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2 mb-2 px-2">
+                                                    <div className="w-1 h-3 bg-white"></div>
+                                                    <h4 className="text-[10px] font-black uppercase tracking-widest opacity-60">Creadores</h4>
+                                                </div>
+                                                {['DOMINGO RAMÍREZ', 'EDKSTUDIOS'].map(name => (
+                                                    <div key={name} className="tactical-row">
+                                                        <Icon name="crown" size={14} className="text-yellow-500" />
+                                                        <div className="flex-1">
+                                                            <p className="text-xs font-black italic uppercase tracking-tighter">{name}</p>
+                                                            <p className="text-[8px] opacity-30 font-bold uppercase tracking-widest">Project Lead</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="space-y-2 pt-4">
+                                                <div className="flex items-center gap-2 mb-2 px-2">
+                                                    <div className="w-1 h-3 bg-white/30"></div>
+                                                    <h4 className="text-[10px] font-black uppercase tracking-widest opacity-60">Colaboradores</h4>
+                                                </div>
+                                                {['EDKULTRA', 'EDKPRO', 'EDKSTUDIOSME'].map(name => (
+                                                    <div key={name} className="tactical-row">
+                                                        <Icon name="code-2" size={14} className="text-blue-400" />
+                                                        <div className="flex-1">
+                                                            <p className="text-xs font-black italic uppercase tracking-tighter">{name}</p>
+                                                            <p className="text-[8px] opacity-30 font-bold uppercase tracking-widest">Network / Dev</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {activeTab === 'info' && (
                                         <div className="space-y-6">
                                             <div className="sonic-active flex justify-center py-10">
@@ -564,6 +601,7 @@
                                 { id: 'materials', icon: 'layers' },
                                 { id: 'rgb', icon: 'palette' },
                                 { id: 'vault', icon: 'lock' },
+                                { id: 'team', icon: 'users' },
                                 { id: 'info', icon: 'zap' }
                             ].map(item => (
                                 <button 
