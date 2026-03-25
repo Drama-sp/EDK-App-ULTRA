@@ -4,14 +4,14 @@
   "description": "Terminal de alta tecnología EDK Studios con chasis interactivo.",
   "icons": [
     {
-      "src": "./EDKSOFFICIALLOGO (1).png",
-      "sizes": "512x1512",
+      "src": "./EDKSTUDIOS2.png",
+      "sizes": "500x1500",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./EDKSOFFICIALLOGO (1).png",
-      "sizes": "512x512",
+      "src": "./EDKSTUDIOS2.png",
+      "sizes": "500x500",
       "type": "image/png",
       "purpose": "maskable"
     }
